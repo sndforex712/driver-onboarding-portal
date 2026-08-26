@@ -18,3 +18,6 @@ export * from "./recruiting_onboarding_transfers";
 export * from "./recruiting_sheet_sync";
 export * from "./franklin_lead_ingests";
 export * from "./driver_operational_handoffs";
+export * from "./portal_access";
+export * from "./portal_documents";
+export * from "./portal_reviewers";
