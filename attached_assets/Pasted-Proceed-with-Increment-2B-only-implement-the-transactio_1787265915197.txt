@@ -1,0 +1,15 @@
+Proceed with Increment 2B only: implement the transactional Recruiting repository/service layer on top of the approved 2A schema and the existing recruiting-domain state machine. Use strict RED→GREEN tests first.
+
+Required behavior:
+1) create RecruitingCase atomically after verifying workspace, Driver, Lead, Case Owner, and Task Owner all belong to the same workspace; enforce one active case and return a deterministic duplicate/conflict outcome.
+2) transition a case atomically using optimistic versioning: update case + append event + persist all transition effects/idempotency keys in one transaction. Replaying the same idempotency key must return the existing successful outcome without duplicating events/effects.
+3) implement the one-time Recruiter → Manager → Recruiter handoff exactly as the domain rules specify. Manager Review creates exactly one manager task/effect and assigns Task Owner to manager; approve/return assigns Task Owner back to immutable Case Owner. Case Owner must not silently change.
+4) Future Follow-up: persist due/resume stage; not-due is a no-op; due return is atomic and requires fresh next action/deadline.
+5) Ready/Hired transfer to Onboarding is exact-once and workspace-safe. Same replay returns the same OnboardingCase; concurrent attempts cannot create two. Verify target OnboardingCase belongs to the same workspace.
+6) rollback tests: any failed insert/effect/transfer leaves no partial case update, event, task/effect, or Onboarding row.
+7) concurrency/idempotency tests for duplicate create, repeated transition, manager handoff, and transfer.
+8) authorization boundary: service takes an authenticated workspace context and rejects cross-workspace case/driver/lead/owner/onboarding access.
+
+Keep scope narrow: no routes, no OpenAPI, no frontend, no scheduler, no integrations, no migration application to shared dev/prod, no legacy Onboarding behavior or design changes. Use an isolated test database/schema if available; never mutate or clean shared data. If isolated Postgres integration tests are impossible, create a transaction-port abstraction with a faithful in-memory test adapter and clearly document the remaining DB integration test, but still implement the real Drizzle adapter.
+
+After GREEN, run focused tests, all existing Recruiting/Manager tests, DB/API/full typecheck, build, diff check, and restart API. Stop with exact files, test counts, and any remaining risk.

@@ -1,0 +1,15 @@
+DEV/DEMO destructive reset authorized by the user. The user explicitly confirmed: no backup; delete the driver data and the linked Recruiting data so the workspace can start from zero.
+
+Proceed now under these exact boundaries:
+1. Target only Franklin DEV workspace_id=1 in the development database. Never access or mutate production, published deployment, Hello World, franklins.ai, Google Sheets, or external systems.
+2. Do NOT create a backup; the user explicitly declined it.
+3. Using the completed dependency audit, delete in one database transaction all workspace_id=1 driver/onboarding/recruiting operational records and all dependent child rows required for a clean restart, including the current drivers, linked recruiting_cases, leads, onboarding_cases, recruiting_onboarding_transfers, checklist/progress, tasks, documents, activity/events/comments/history/handoffs/manager pushes, and other exact dependent tables discovered by the schema audit.
+4. Preserve schema/migrations, workspaces, users, the four passwordless demo accounts, sessions/auth infrastructure, roles/memberships, app configuration, secrets/configurations, and code.
+5. Before COMMIT, use exact scoped counts and foreign-key checks inside the transaction. If any target would extend outside workspace_id=1 or into users/auth/config, ROLLBACK and stop.
+6. After commit, verify every affected workspace_id=1 driver/recruiting/onboarding table count is zero; verify no unrelated workspace/user/auth/config counts changed.
+7. Restart only existing DEV API/web workflows. Verify /drivers and recruiting surfaces show clean empty states for Admin/Hardy/Mason/Wayne, passwordless login/logout still works, and unauthenticated access remains denied.
+8. No code edits unless absolutely required for the empty state; if no code change is needed, do not change code.
+9. Do not publish, republish, deploy, or sync/import any data.
+10. Report before/after non-sensitive counts, transaction result, preserved-system checks, and DEV preview URL. Do not print PII or row contents.
+
+This is the final authorization to perform the deletion without backup.

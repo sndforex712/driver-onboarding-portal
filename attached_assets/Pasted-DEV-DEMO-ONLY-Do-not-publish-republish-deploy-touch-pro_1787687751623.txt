@@ -1,0 +1,20 @@
+DEV/DEMO ONLY. Do not publish, republish, deploy, touch production, Hello World, franklins.ai, real Sheets, external integrations, or real driver data.
+
+Redesign the entire Driver Onboarding Portal UI into one polished, cohesive, professional fleet-operations design system. The current dark terminal-style login conflicts with the light operational CRM; remove the retro/monospace terminal aesthetic.
+
+Scope:
+- Login, authenticated app shell/header/navigation, All Drivers queue, driver detail, Recruiting pages, dashboards, filters, tables, cards, forms, badges, modals, empty/loading/error states.
+- Use a unified modern visual language: Franklin deep green as brand accent, restrained warm amber only for primary/attention states, neutral off-white/light surfaces, dark readable text, subtle borders/shadows, consistent radii and spacing.
+- Use a clean modern sans-serif typography system; clear hierarchy and compact but readable operational density.
+- Create/reuse shared design tokens and shared primitives rather than one-off page CSS.
+- Login should look premium and trustworthy: branded side/hero treatment on desktop plus a clean sign-in card; single-column compact mobile layout. Keep DEV/DEMO labeling visible but understated. Remove engineering/provisioning explanation from the prominent UI; use a short user-facing help line only.
+- Make tables and driver rows easier to scan: sticky header where appropriate, aligned columns, clear owner/step/status/due badges, hover/focus states, comfortable row height, responsive fallback for smaller screens.
+- Standardize all controls: buttons, inputs, selects, tabs, filters, pagination, toasts, validation, skeletons.
+- Accessibility: visible keyboard focus, WCAG-friendly contrast, semantic labels, no color-only status meaning, 44px touch targets on mobile.
+- Responsive QA at desktop, tablet, and mobile widths. Avoid excessive whitespace and avoid oversized hero sections in operational pages.
+- Preserve all existing authentication, RBAC, routing, Step 6 exact-once Hardy handoff, masking/privacy, API contracts, data, and tests.
+- Add focused frontend tests for critical redesigned UI behavior if needed.
+- Run frontend typecheck, tests, build, and visually inspect the login plus All Drivers/detail states in preview. Use only synthetic/anonymized demo state.
+- Preview only. Do not publish.
+
+Work quickly and finish this cohesive UI pass end-to-end; report changed files and validation results.

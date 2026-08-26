@@ -1,0 +1,23 @@
+DEV/DEMO ONLY. The user has decided that ALL work stays in this Driver Onboarding Portal project until it is 100% ready. Do not inspect, edit, migrate, deploy, publish, or connect franklins.ai/Hello-World/production. Do not write to any real Google Sheet or production DB. Do not create real accounts/passwords or expose real PII.
+
+Continue from completed Task #22; do not stop at a plan. Audit the current code, then implement every missing item needed for a complete three-person demo:
+
+Operating model:
+- HARDY is experienced lead: manager-wide visibility, escalations/Needs Review, Steps 7–13.
+- MASON and WAYNE: Steps 1–6, persisted stable balanced assignments, each sees only own work.
+- Completion of Step 6 triggers an auditable idempotent handoff to Hardy exactly once; cannot reassign backward.
+- Manager/admin sees All Drivers and all three queues.
+
+Required completion:
+1) One canonical 13-stage model: 1 Application, 2 Clearing House, 3 Drug Test, 4 Contract, 5 Med Card, 6 Title, 7 Annual Inspection, 8 Shipment Need to Send, 9 Shipment Sent, 10 2290, 11 Plate Number, 12 Telegram/Group, 13 Ready. Ready requires all 12 milestones.
+2) DEV-only login/RBAC end to end. Use secure password hashing/session patterns already in repo; never hard-code plaintext passwords. Provide a safe demo-user provisioning mechanism using environment variables or a one-time dev command for Hardy/Mason/Wayne/admin. Role/capability tests required.
+3) Staff self-queue restriction enforced server-side, tenant isolation, manager/Hardy lead permissions, no cross-owner access/update.
+4) Persisted operational owner, next action, due/SLA, structured safe status/blocker, Needs Review/Needs Assignment, audit history and exact-once handoff.
+5) Views/filters already built must remain correct: All, Due Today, Overdue, Waiting/Blocked, No Next Action, Needs Review; owner/step/source/status/search; counts equal visible rows.
+6) PII-safe list rows: masked phone suffix only and no raw Sheet notes/addresses/payload. Use only synthetic/anonymized demo fixtures. Disable any external real-data sync by default in DEV/DEMO; require an explicit env flag and keep it GET-only if test code needs it.
+7) Authorized operational edit controls and detail/timeline; staff edits only own assignments; Hardy/manager can review/reassign within the model.
+8) Responsive desktop/mobile, keyboard/accessibility names, loading/empty/error states, refresh persistence, audit timeline.
+9) Add and run focused/full API/frontend/auth/RBAC/routing/filter/PII tests, typechecks, codegen if needed, builds, diff check, and read-only browser acceptance. Fix all P0/P1/P2 issues.
+10) Preview only. Do NOT publish. Final report must include exact changed files, migration, demo user provisioning steps without passwords, all test commands/pass counts, preview URL/routes, and a checklist of anything still preventing “100% demo ready.” If no blocker remains, say so explicitly.
+
+Do not touch production or the other Replit project.

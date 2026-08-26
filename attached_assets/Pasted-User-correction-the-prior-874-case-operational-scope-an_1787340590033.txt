@@ -1,0 +1,21 @@
+User correction: the prior 874-case operational scope and Case Owner rebalance were based on a wrong interpretation.
+
+AUTHORITATIVE CURRENT PROCESS SET
+- For Google Sheet workbook 1x0P28BzXkX1tAMCxGEc7p1_DFHDO8cAuIqTs3TyMfTc, only the MAIN JIDO sheet/tab rows 2 through 71 inclusive are current in-process drivers.
+- Row 1 is header. Blank rows and black section-label rows (for example package/drug-test/process separators) are not drivers.
+- Based on the shown sheet, expect 67 real driver rows (70 rows minus 3 section rows), but verify this from the live read-only Sheet/import metadata; do not force 67 if the authoritative row parsing proves otherwise.
+- Sheet-synced rows >71, other tabs, hidden/non-MAIN rows, and demo imports are not current process drivers and must not appear in the active Recruiting board.
+- Do not delete records and NEVER write to Google Sheets. Preserve them non-destructively as historical/out-of-scope or hide them through a durable operational visibility predicate.
+- New legitimate manually-created Recruiting cases must still be visible; the row-range restriction applies to Google Sheet imports.
+
+CORRECT THE PREVIOUS MISTAKE SAFELY
+1. First reproduce and inspect source metadata/external keys to prove exact tab name and row numbers. Produce a read-only set of the qualifying MAIN JIDO rows and matching cases, including duplicates/missing rows/section rows.
+2. Inspect the prior operation audit for recruiter-owner-rebalance-v1. The prior run changed 867 Case Owners. Build a guarded rollback preview that restores each changed Case Owner to its exact previous owner from the audit payload/history. Never guess a previous owner. If exact before-values are unavailable for any case, stop before rollback and report the count.
+3. TDD first: tests must prove MAIN JIDO rows 2-71 are included, row 1/72+/other tabs/blank-section rows excluded, manual non-sheet cases remain eligible, sync reruns cannot re-expose out-of-scope rows, and rollback is transactional/idempotent with Task Owner untouched.
+4. If rollback preview has exact previous owner for all 867 changes, execute once transactionally with a stable rollback operation key and one audit record per restoration; second run must be no-op.
+5. Replace the current broad active-board visibility rule with one canonical server-side predicate shared by list/queue/detail/counts and future sync/rebalance: visible manual legitimate cases plus Google Sheet MAIN JIDO row 2-71 real driver rows only.
+6. Do NOT yet redistribute Mason/Wayne/Hardy or alter Task Owner. The user has now corrected the dataset scope; first restore the mistaken Case Owner operation and make the board show only the authoritative process set. Preserve current workflow/stages.
+7. Run focused RED/GREEN tests, Sheet Sync, Recruiting, Manager Board, typecheck/build, restart API/web.
+8. Verify live /recruiting?view=all&lifecycle=active: report exact visible total, exact qualifying Sheet rows, duplicates/missing/unmatched, rollback restored/skipped/unavailable, Task Owner changes=0, console/network status. Google Sheet remains unchanged.
+
+Proceed autonomously through read-only inspection, guarded rollback if all before-values are provable, scope fix, and verification. Stop without mutation only if rollback evidence or source-row identity is ambiguous.

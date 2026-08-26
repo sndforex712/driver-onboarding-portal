@@ -1,0 +1,29 @@
+Implement and execute a production-quality recruiter routing + one-time active-case rebalance. User-approved business rule:
+
+OWNER ROUTING
+1. Active Recruiting stages New Lead through Drug Test Passed (stages 1-9, including Manager Review): Case Owner must be Mason or Wayne, split exactly evenly across the whole scoped active set (difference <= 1). Use canonical existing user records; first inspect exact IDs/spellings and do not create duplicates.
+2. Active stages Compliance Documents Pending through Ready For Onboarding (stages 10-13): Case Owner must be Hardy.
+3. Manager Review: keep Case Owner as Mason/Wayne, but preserve the one-time manager handoff and manager Task Owner semantics. Never overwrite the manager task owner with a recruiter.
+4. Future Follow Up: retain its current/previous recruiter assignment; do not route to Hardy. Terminal Hired/Transferred and Closed Lost are excluded.
+5. New cases and later stage transitions must automatically follow the same policy:
+   - early stage entering/created: if already Mason/Wayne keep; otherwise choose least-loaded of Mason/Wayne with deterministic tie-break.
+   - transition into stage 10-13: Hardy.
+   - transition back into early stages: least-loaded Mason/Wayne.
+   - preserve existing domain workflow rules for Task Owner; Case Owner and Task Owner are separate.
+6. Google Sheet sync remains strictly one-way read-only. Never write to Google Sheets.
+
+QUALITY/SAFETY
+- First inspect repository test/build conventions and exact owner records.
+- TDD: add failing tests first, prove RED, then implement minimal routing logic, then GREEN/refactor.
+- Required tests: exact batch balance diff <=1; Hardy-only later stages; Manager Review task owner preserved; Future Follow Up retained; terminal excluded; new-case auto-route; stage-transition auto-route; audit event once; rerun idempotent; transaction rollback on error.
+- Add a dry-run/preview command or service first. It must report: scoped counts by stage, current owner, proposed owner, Mason total, Wayne total, Hardy total, changed/skipped/excluded/out-of-policy. Stable deterministic order by case ID.
+- One-time rebalance must be transactional, audited for every changed case, and protected by a stable idempotency key/operation marker so rerun is a no-op with no duplicate audit/task events.
+- Do not directly hack task owners or bypass existing domain services.
+- Before applying, run dry-run and validate that Mason/Wayne difference <=1, every stage 10-13 goes to Hardy, zero terminal/Future Follow Up mutations, and exact Mason/Wayne/Hardy records exist. If anything is ambiguous/unexpected, STOP and report without mutating.
+- If dry-run is valid, apply exactly once, then rerun dry-run/read-only verification to prove no-op/idempotency.
+- Run focused tests, full Recruiting/Sheet/Manager regressions, typecheck/build.
+- Restart preview and verify live /recruiting?view=all&lifecycle=active: board shows Mason/Wayne/Hardy according to policy; Manager Review task owners remain manager/workflow. Check console/network.
+- Report exact owner IDs/names, before/after counts, changed/skipped/excluded, final Mason/Wayne difference, Hardy scoped count, out-of-policy count, tests/build/browser results.
+- Do not alter Onboarding behavior/design or Google Sheet contents.
+
+Proceed autonomously through implementation, dry-run validation, one-time apply, and verification. Keep the UI design unchanged except any minimal admin/reporting surface strictly needed; prefer backend/CLI/service for rebalance.

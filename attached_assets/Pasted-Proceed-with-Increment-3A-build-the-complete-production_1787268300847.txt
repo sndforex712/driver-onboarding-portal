@@ -1,0 +1,29 @@
+Proceed with Increment 3A: build the complete production-quality Recruiting workspace UI on top of the approved generated API/client wrappers. Keep the existing Onboarding system, routes, components, and visual design unchanged.
+
+Goal: a recruiter/manager can work fast enough that no driver is lost. The UI should feel like the existing product but more operational, polished, dense, and immediately understandable—not a generic CRM template.
+
+Required pages/interactions:
+1) Recruiting Work Queue as the default view: priority-sorted table/list optimized for scanning, with driver, stage, Case Owner, Task Owner, next action, deadline, SLA state, source, recruiter, age, and clear blocked/overdue indicators. URL-backed filters/search/sort/pagination; saved-role defaults if existing conventions allow.
+2) Pipeline view: 16 business stages, compact counts, drag/drop only if it can safely enforce valid transitions; otherwise fast explicit Move action. No client-only stage mutation. Future Follow-up and Closed Lost are clearly separated.
+3) Case detail workspace: driver/contact summary, immutable Case Owner, current Task Owner, mandatory next action/deadline editor, stage actions, one-time Manager Review handoff controls, timeline/history, checklist/progress, SLA clock, notes/context, and exact-once transfer status.
+4) Manager Review queue: only cases requiring manager action, prominent approve/return decisions, return always goes to Case Owner, keyboard-efficient.
+5) Recruiting War Room/dashboard: SLA red/yellow/green totals, overdue/unassigned, bottleneck stages, recruiter workload, aging, source conversion, and actionable drill-downs.
+6) Create case flow with duplicate/conflict feedback and owner validation.
+7) Loading skeletons, useful empty/error/offline states, optimistic UX only where replay-safe, stale-version conflict recovery, idempotency keys via the typed wrappers, success/error toasts without leaking SQL/server details.
+8) Accessibility: semantic headings, labels, keyboard navigation, visible focus, non-color status text/icons, responsive at 320/768/1024/1440, no console errors.
+9) Performance: no giant components (>200 lines), separate data containers/presentation, React Query server state, memoize only where justified.
+
+Design:
+- Reuse the project’s real components/tokens/layout/navigation; no purple gradients, excessive rounding/shadows, oversized padding, or stock card-grid aesthetic.
+- Preserve current Onboarding navigation behavior; add Recruiting as a separate top-level module.
+- Dense desktop-first operations layout with clean mobile fallback.
+- Use realistic trucking recruiting copy/data labels.
+
+Testing:
+- RED→GREEN component/interaction tests where supported.
+- Run UI against the retained isolated PostgreSQL DB through a short-lived server only; do not migrate shared dev/prod.
+- Test recruiter and manager roles, work queue filters, create duplicate, transition/replay, stale version, handoff and return, Future Follow-up, transfer, empty/error/loading, keyboard paths, and responsive layouts.
+- Browser-test the running UI at 320, 768, 1024, 1440; inspect console/network errors and fix them.
+- Do not publish/deploy, delete any database object, or modify existing Onboarding UI/design/behavior.
+
+After implementation: run all Recruiting/API/Manager regressions, typecheck/build/diff review, external review if available, API/app restart, then stop with screenshots or clear browser evidence, exact files/tests, and remaining release step.

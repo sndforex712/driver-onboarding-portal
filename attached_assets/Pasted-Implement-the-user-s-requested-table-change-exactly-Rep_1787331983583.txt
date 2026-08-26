@@ -1,0 +1,21 @@
+Implement the user's requested table change exactly:
+
+Replace the entire "ACTION DUE" column in both Recruiting Priority Queue and All Cases with a "DRIVER STATUS" column that visually matches the compact hiring-stage progress rail shown in the user's second screenshot.
+
+Requirements:
+1. Reuse/extract the canonical recruiting stage order and visual language from the existing case-detail stage progress component. Do not create a conflicting stage model.
+2. In each table row render a compact horizontal progress rail:
+   - completed stages: green line/dots
+   - current stage: amber/yellow emphasized dot and clearly readable current-stage label
+   - future stages: muted dark/gray
+   - do not rely on color alone; include accessible current-stage text and aria-label like "Driver status: Application Sent, step 4 of 15".
+3. Rename the header from ACTION DUE to DRIVER STATUS. The repeated imported placeholder text and due timestamp must not render anywhere in Queue or All Cases.
+4. Preserve the underlying task, next-action, deadline, SLA calculations, sorting, scheduler, handoff guards, and case-detail timeline. This is an operational table presentation change only.
+5. Keep the existing Stage badge column unless layout testing shows it is genuinely harmful; the requested replacement is specifically the Action Due column.
+6. Desktop: show a dense but legible rail resembling the screenshot without making rows excessively tall. It may horizontally scroll within its own cell only if necessary.
+7. Mobile/narrow: show a compact progress version with previous/current/next context or a reduced rail, but always keep the current status label readable. Do not break the table or direct /recruiting deep link.
+8. Use the project dark-green design tokens and existing spacing/typography; no generic gradients or oversized cards.
+9. Add focused component/regression coverage for first, middle, terminal, and unknown stage values, and confirm no "Review imported legacy recruiting profile..." text appears in rendered list UI.
+10. Run frontend/API typechecks, build, Recruiting 20/20, Sheet sync/list, Manager Board 39/39, and real browser checks for desktop/mobile Queue plus All Cases. Confirm clean console/network and unchanged 899 active JIDO case count.
+
+Do not stop at a plan. Implement, restart the web workflow, verify the live UI, and report the exact files changed and link.

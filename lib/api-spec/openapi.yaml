@@ -1,0 +1,2388 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Franklins AI Driver Onboarding - Development/Demo API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: drivers
+    description: Driver onboarding records
+  - name: tasks
+    description: Onboarding tasks
+  - name: documents
+    description: Driver documents
+  - name: activity
+    description: Activity and audit timeline
+  - name: comments
+    description: Comments on onboarding records
+  - name: checklist
+    description: Compliance checklist items
+  - name: dashboard
+    description: Dashboard metrics and feeds
+  - name: work-queue
+    description: Priority work queue
+  - name: users
+    description: Demo users and role switcher
+  - name: templates
+    description: Workflow templates
+  - name: integrations
+    description: Integration adapters
+  - name: events
+    description: Recruiter events
+  - name: recruiting
+    description: Recruiting cases before onboarding transfer
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /leads:
+    post:
+      operationId: ingestFranklinLead
+      tags: [recruiting]
+      summary: Ingest one trusted Franklin new lead
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FranklinLeadIngestInput" }
+      responses:
+        "201":
+          description: New Recruiting intake case created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FranklinLeadIngestResult" }
+        "200":
+          description: Existing idempotent target returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FranklinLeadIngestResult" }
+        "401": { $ref: "#/components/responses/ForbiddenError" }
+        "409": { $ref: "#/components/responses/ConflictError" }
+        "422": { $ref: "#/components/responses/BusinessRuleError" }
+        "503":
+          description: Ingest is not configured
+
+  /drivers:
+    get:
+      operationId: listDrivers
+      tags: [drivers]
+      summary: List all onboarding drivers
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: driverType
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: assigneeId
+          in: query
+          schema:
+            type: ["number", "null"]
+      responses:
+        "200":
+          description: List of drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Driver"
+    post:
+      operationId: createDriver
+      tags: [drivers]
+      summary: Create a new onboarding record (simulate Hired event)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Driver"
+        "409":
+          description: Duplicate - driver already exists for this recruit event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /drivers/operational-queue:
+    get:
+      operationId: listDriverOperationalQueue
+      tags: [drivers]
+      summary: List workspace-scoped operational driver queue
+      parameters:
+        - name: view
+          in: query
+          schema:
+            type: string
+            enum: [all, due_today, overdue, waiting_blocked, no_next_action, needs_review]
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: driverType
+          in: query
+          schema: { type: string }
+        - name: search
+          in: query
+          schema: { type: string }
+        - name: operationalOwner
+          in: query
+          schema: { type: string }
+        - name: step
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 11
+        - name: source
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Filtered operational queue and counts from the same dataset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverOperationalQueue"
+
+  /drivers/{id}:
+    get:
+      operationId: getDriver
+      tags: [drivers]
+      summary: Get a single driver onboarding record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Driver record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Driver"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateDriver
+      tags: [drivers]
+      summary: Update a driver onboarding record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Driver"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /drivers/{id}/ready-for-dispatch:
+    post:
+      operationId: markReadyForDispatch
+      tags: [drivers]
+      summary: Mark driver as Ready for Dispatch (locked until all mandatory gates pass)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Readiness result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResult"
+        "400":
+          description: Gates not yet passed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResult"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /drivers/{id}/datatruck-sync:
+    post:
+      operationId: triggerDatatruckSync
+      tags: [drivers]
+      summary: Simulate idempotent DataTruck TMS sync
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Sync record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatatruckSync"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /drivers/{id}/datatruck-sync/history:
+    get:
+      operationId: getDatatruckSyncHistory
+      tags: [drivers]
+      summary: Get DataTruck sync audit history for a driver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of sync records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DatatruckSync"
+
+  /drivers/{id}/tasks:
+    get:
+      operationId: listDriverTasks
+      tags: [tasks]
+      summary: List tasks for a driver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OnboardingTask"
+    post:
+      operationId: createDriverTask
+      tags: [tasks]
+      summary: Create a task for a driver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingTaskInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingTask"
+
+  /drivers/{id}/tasks/{taskId}:
+    patch:
+      operationId: updateDriverTask
+      tags: [tasks]
+      summary: Update a task for a driver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingTaskUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingTask"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /drivers/{id}/documents:
+    get:
+      operationId: listDriverDocuments
+      tags: [documents]
+      summary: List documents for a driver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DriverDocument"
+    post:
+      operationId: createDriverDocument
+      tags: [documents]
+      summary: Create/upload a document record for a driver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverDocumentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverDocument"
+
+  /drivers/{id}/documents/{docId}:
+    patch:
+      operationId: updateDriverDocument
+      tags: [documents]
+      summary: Update a document status or expiry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DriverDocumentUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverDocument"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /drivers/{id}/activity:
+    get:
+      operationId: listDriverActivity
+      tags: [activity]
+      summary: Get activity/audit timeline for a driver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Activity timeline
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEntry"
+
+  /drivers/{id}/comments:
+    get:
+      operationId: listDriverComments
+      tags: [comments]
+      summary: List comments for a driver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+    post:
+      operationId: createDriverComment
+      tags: [comments]
+      summary: Add a comment to a driver onboarding record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Comment"
+
+  /drivers/{id}/checklist:
+    get:
+      operationId: listDriverChecklist
+      tags: [checklist]
+      summary: Get compliance checklist for a driver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Checklist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChecklistItem"
+
+  /drivers/{id}/checklist/{itemId}:
+    patch:
+      operationId: updateChecklistItem
+      tags: [checklist]
+      summary: Update a checklist item status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChecklistItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChecklistItem"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /events/hired:
+    post:
+      operationId: simulateHiredEvent
+      tags: [events]
+      summary: Simulate a Recruiter Hired event (idempotent by externalRecruitId)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HiredEventInput"
+      responses:
+        "201":
+          description: New onboarding record created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Driver"
+        "200":
+          description: Existing record returned (duplicate suppressed)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Driver"
+
+  /dashboard/metrics:
+    get:
+      operationId: getDashboardMetrics
+      tags: [dashboard]
+      summary: Get dashboard summary metrics
+      responses:
+        "200":
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardMetrics"
+
+  /dashboard/activity-feed:
+    get:
+      operationId: getDashboardActivityFeed
+      tags: [dashboard]
+      summary: Get recent activity feed across all drivers
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEntry"
+
+  /dashboard/compliance-exceptions:
+    get:
+      operationId: getComplianceExceptions
+      tags: [dashboard]
+      summary: Get compliance exception queue (expired docs, failed gates)
+      responses:
+        "200":
+          description: Compliance exceptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ComplianceException"
+
+  /work-queue:
+    get:
+      operationId: getWorkQueue
+      tags: [work-queue]
+      summary: Get the priority work queue with SLA states
+      parameters:
+        - name: assigneeId
+          in: query
+          schema:
+            type: ["number", "null"]
+        - name: priority
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Work queue items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkQueueItem"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List demo users
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppUser"
+
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: Get current demo session user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppUser"
+
+  /users/me/switch-role:
+    post:
+      operationId: switchRole
+      tags: [users]
+      summary: Switch demo role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleSwitchInput"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppUser"
+
+  /workflow-templates:
+    get:
+      operationId: listWorkflowTemplates
+      tags: [templates]
+      summary: List workflow templates (Owner Operator, Company Driver)
+      responses:
+        "200":
+          description: Templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkflowTemplate"
+
+  /workflow-templates/{id}:
+    get:
+      operationId: getWorkflowTemplate
+      tags: [templates]
+      summary: Get a workflow template with full checklist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowTemplate"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /integrations:
+    get:
+      operationId: listIntegrations
+      tags: [integrations]
+      summary: List integration adapters (all disconnected/demo)
+      responses:
+        "200":
+          description: Integrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IntegrationAdapter"
+
+  /recruiter-report:
+    get:
+      operationId: getRecruiterReport
+      tags: [dashboard]
+      summary: Recruiter and source attribution report
+      responses:
+        "200":
+          description: Recruiter report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RecruiterReportRow"
+
+  /recruiting/cases:
+    get:
+      operationId: listRecruitingCases
+      tags: [recruiting]
+      summary: List Recruiting cases with bounded pagination
+      parameters:
+        - $ref: "#/components/parameters/RecruitingStageQuery"
+        - name: lifecycle
+          in: query
+          schema: { type: string, enum: [active, hired_transferred, closed_lost] }
+        - name: caseOwnerId
+          in: query
+          schema: { type: number }
+        - name: taskOwnerId
+          in: query
+          schema: { type: number }
+        - name: driverId
+          in: query
+          schema: { type: number }
+        - name: leadId
+          in: query
+          schema: { type: number }
+        - name: dueBefore
+          in: query
+          schema: { type: string, format: date-time }
+        - name: search
+          in: query
+          schema: { type: string, minLength: 1, maxLength: 120 }
+        - name: sort
+          in: query
+          description: Progress is the default; explicit SLA, due-date, and newest orderings remain available.
+          schema: { type: string, enum: [progress, sla, deadline, newest], default: progress }
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/LimitQuery"
+      responses:
+        "200":
+          description: Page of Recruiting cases
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingCasePage" }
+    post:
+      operationId: createRecruitingCase
+      tags: [recruiting]
+      summary: Create a Recruiting case
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateRecruitingCaseInput" }
+      responses:
+        "201":
+          description: Case created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingMutationResult" }
+        "200":
+          description: Idempotent duplicate case replay
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingMutationResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "409": { $ref: "#/components/responses/ConflictError" }
+
+  /recruiting/cases/{id}:
+    get:
+      operationId: getRecruitingCase
+      tags: [recruiting]
+      summary: Get a Recruiting case detail
+      parameters:
+        - $ref: "#/components/parameters/RecruitingCaseId"
+      responses:
+        "200":
+          description: Recruiting case detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingCaseDetail" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+
+  /recruiting/cases/{id}/timeline:
+    get:
+      operationId: listRecruitingCaseTimeline
+      tags: [recruiting]
+      summary: Get a Recruiting case transition timeline
+      parameters:
+        - $ref: "#/components/parameters/RecruitingCaseId"
+        - $ref: "#/components/parameters/LimitQuery"
+        - name: beforeId
+          in: query
+          schema: { type: number, minimum: 1 }
+      responses:
+        "200":
+          description: Reverse chronological case timeline
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingTimelinePage" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+
+  /recruiting/cases/{id}/transitions:
+    post:
+      operationId: transitionRecruitingCase
+      tags: [recruiting]
+      summary: Apply an optimistic, idempotent Recruiting transition
+      parameters:
+        - $ref: "#/components/parameters/RecruitingCaseId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecruitingTransitionInput" }
+      responses:
+        "200":
+          description: Transition committed or replayed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingMutationResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "409": { $ref: "#/components/responses/ConflictError" }
+        "422": { $ref: "#/components/responses/BusinessRuleError" }
+
+  /recruiting/cases/{id}/manager-decision:
+    post:
+      operationId: decideRecruitingManagerReview
+      tags: [recruiting]
+      summary: Approve or return a case in Manager Review
+      parameters:
+        - $ref: "#/components/parameters/RecruitingCaseId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecruitingManagerDecisionInput" }
+      responses:
+        "200":
+          description: Manager decision committed or replayed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingMutationResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "409": { $ref: "#/components/responses/ConflictError" }
+        "422": { $ref: "#/components/responses/BusinessRuleError" }
+
+  /recruiting/cases/{id}/future-follow-up/return:
+    post:
+      operationId: returnRecruitingFutureFollowUp
+      tags: [recruiting]
+      summary: Return a due Future Follow-up case to its saved stage
+      parameters:
+        - $ref: "#/components/parameters/RecruitingCaseId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecruitingFutureFollowUpReturnInput" }
+      responses:
+        "200":
+          description: Returned, replayed, or not-yet-due result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingMutationResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "409": { $ref: "#/components/responses/ConflictError" }
+        "422": { $ref: "#/components/responses/BusinessRuleError" }
+
+  /recruiting/cases/{id}/transfer:
+    post:
+      operationId: transferRecruitingCaseToOnboarding
+      tags: [recruiting]
+      summary: Transfer a hired Recruiting case to Onboarding exactly once
+      parameters:
+        - $ref: "#/components/parameters/RecruitingCaseId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecruitingTransferInput" }
+      responses:
+        "200":
+          description: Transfer completed or replayed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingTransferResult" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "404": { $ref: "#/components/responses/NotFoundError" }
+        "409": { $ref: "#/components/responses/ConflictError" }
+        "422": { $ref: "#/components/responses/BusinessRuleError" }
+
+  /recruiting/dashboard:
+    get:
+      operationId: getRecruitingDashboard
+      tags: [recruiting]
+      summary: Get Recruiting stage, ownership, and SLA summary
+      responses:
+        "200":
+          description: Recruiting dashboard summary
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingDashboard" }
+
+  /recruiting/managers:
+    get:
+      operationId: listRecruitingManagers
+      tags: [recruiting]
+      summary: List workspace managers eligible for Recruiting Manager Review
+      responses:
+        "200":
+          description: Workspace-scoped manager review assignees
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RecruitingManager" }
+
+  /recruiting/queue:
+    get:
+      operationId: getRecruitingQueue
+      tags: [recruiting]
+      summary: Get prioritized Recruiting work queue
+      parameters:
+        - $ref: "#/components/parameters/RecruitingStageQuery"
+        - name: filter
+          in: query
+          schema: { $ref: "#/components/schemas/RecruitingQueueFilter" }
+        - $ref: "#/components/parameters/PageQuery"
+        - $ref: "#/components/parameters/LimitQuery"
+      responses:
+        "200":
+          description: Prioritized Recruiting queue
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingQueueResponse" }
+
+  /recruiting/sheet-sync/status:
+    get:
+      operationId: getRecruitingSheetSyncStatus
+      tags: [recruiting]
+      summary: Get the workspace-scoped, read-only Google Sheet import status
+      responses:
+        "200":
+          description: Current sync configuration, last run, and retained profile count
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingSheetSyncStatus" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+
+  /recruiting/sheet-sync/run:
+    post:
+      operationId: runRecruitingSheetSync
+      tags: [recruiting]
+      summary: Run the public Google Sheet importer once
+      description: Pull-only operation. It uses an anonymous Google CSV GET export and never writes to Google Sheets.
+      responses:
+        "200":
+          description: Import completed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingSheetSyncResult" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "409":
+          description: A sync is already running
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingSheetSyncResult" }
+        "502":
+          description: Source retrieval failed without changing the Google Sheet
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecruitingSheetSyncResult" }
+
+components:
+  parameters:
+    RecruitingCaseId:
+      name: id
+      in: path
+      required: true
+      schema: { type: number, minimum: 1 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 8, maxLength: 200, pattern: "^[A-Za-z0-9][A-Za-z0-9._:-]*$" }
+    RecruitingStageQuery:
+      name: stage
+      in: query
+      schema: { $ref: "#/components/schemas/RecruitingStage" }
+    PageQuery:
+      name: page
+      in: query
+      schema: { type: number, minimum: 1, default: 1 }
+    LimitQuery:
+      name: limit
+      in: query
+      schema: { type: number, minimum: 1, maximum: 100, default: 25 }
+  responses:
+    ValidationError:
+      description: Invalid request
+      content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+    ForbiddenError:
+      description: Forbidden
+      content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+    NotFoundError:
+      description: Not found
+      content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+    ConflictError:
+      description: Conflict
+      content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+    BusinessRuleError:
+      description: Business rule violation
+      content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } }
+  schemas:
+    RecruitingStage:
+      type: string
+      enum: [new_lead, contact_attempted, connected_prequalified, application_sent, application_received, manager_review, clearinghouse_pending, drug_test_scheduled, drug_test_passed, compliance_documents_pending, contract_sent, contract_signed, ready_for_onboarding, hired_transferred_to_onboarding, future_follow_up, closed_lost]
+
+    RecruitingLifecycle:
+      type: string
+      enum: [active, hired_transferred, closed_lost]
+
+    RecruitingQueueFilter:
+      type: string
+      enum: [due_soon, overdue, unassigned]
+
+    RecruitingManager:
+      type: object
+      required: [id, name, role]
+      properties:
+        id: { type: number }
+        name: { type: string }
+        role: { type: string, enum: [owner_admin, manager] }
+
+    RecruitingClosedLostReason:
+      type: string
+      enum: [qualification_not_met, clearinghouse_issue, drug_test_issue, compliance_document_issue, contract_declined, compensation_or_role_mismatch, withdrew, no_response, duplicate_or_merged, other]
+
+    RecruitingCase:
+      type: object
+      required: [id, workspaceId, leadId, caseNumber, stage, lifecycle, caseOwnerId, version, transferStatus, createdAt, updatedAt]
+      properties:
+        id: { type: number }
+        workspaceId: { type: number }
+        driverId: { type: ["number", "null"] }
+        leadId: { type: number }
+        caseNumber: { type: string }
+        sourceId: { type: ["string", "null"] }
+        stage: { $ref: "#/components/schemas/RecruitingStage" }
+        lifecycle: { $ref: "#/components/schemas/RecruitingLifecycle" }
+        caseOwnerId: { type: number }
+        taskOwnerId: { type: ["number", "null"] }
+        nextAction: { type: ["string", "null"] }
+        nextActionDueAt: { type: ["string", "null"], format: date-time }
+        slaDeadlineAt: { type: ["string", "null"], format: date-time }
+        followUpDueAt: { type: ["string", "null"], format: date-time }
+        resumeStage: { anyOf: [{ $ref: "#/components/schemas/RecruitingStage" }, { type: "null" }] }
+        closedLostReason: { anyOf: [{ $ref: "#/components/schemas/RecruitingClosedLostReason" }, { type: "null" }] }
+        closedLostNote: { type: ["string", "null"] }
+        version: { type: number }
+        transferStatus: { type: string, enum: [not_requested, pending, completed, failed] }
+        transferRequestedAt: { type: ["string", "null"], format: date-time }
+        transferredAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    RecruitingCaseListItem:
+      allOf:
+        - $ref: "#/components/schemas/RecruitingCase"
+        - type: object
+          required: [driverName, leadName, caseOwnerName, taskOwnerName, slaColor, legacyPhone, legacyDriverType, legacyTruckYearMake]
+          properties:
+            driverName: { type: string }
+            leadName: { type: string }
+            caseOwnerName: { type: ["string", "null"] }
+            taskOwnerName: { type: ["string", "null"] }
+            slaColor: { type: string, enum: [green, yellow, red] }
+            legacyPhone:
+              type: ["string", "null"]
+              description: Normalized phone from the active main-tab legacy profile, when available.
+            legacyDriverType:
+              type: ["string", "null"]
+              description: Driver type from the active main-tab legacy profile, when available.
+            legacyTruckYearMake:
+              type: ["string", "null"]
+              description: Truck year and make/model text from the active main-tab legacy profile, when available.
+            franklinIntake:
+              anyOf:
+                - $ref: "#/components/schemas/FranklinLeadIntake"
+                - type: "null"
+
+    RecruitingCasePage:
+      type: object
+      required: [items, page, limit, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RecruitingCaseListItem" }
+        page: { type: number }
+        limit: { type: number }
+        total: { type: number }
+
+    FranklinLeadIntake:
+      type: object
+      required: [phone, driverType, cdlFrontReceived, cdlBackReceived, medicalCardReceived, docsReceived, displayedRecruiter, requestedAt]
+      properties:
+        phone: { type: string }
+        driverType: { type: string, enum: [owner_operator, company_driver] }
+        cdlFrontReceived: { type: boolean }
+        cdlBackReceived: { type: boolean }
+        medicalCardReceived: { type: boolean }
+        docsReceived: { type: boolean }
+        displayedRecruiter: { type: string }
+        requestedAt: { type: string, format: date-time }
+
+    FranklinLeadIngestInput:
+      type: object
+      additionalProperties: false
+      required: [source_system, source_tenant, source_lead_id, external_id, driver_name, phone, driver_type, documents, docs_received, displayed_recruiter, requested_by, requested_at]
+      properties:
+        source_system: { type: string, enum: [franklins.ai] }
+        source_tenant: { type: string, enum: [Franklin] }
+        source_lead_id: { type: string, minLength: 1, maxLength: 160 }
+        external_id: { type: string, minLength: 1, maxLength: 220 }
+        driver_name: { type: string, minLength: 1, maxLength: 160 }
+        phone: { type: string, pattern: "^\\+[1-9]\\d{7,14}$" }
+        driver_type: { type: string, enum: [owner_operator, company_driver] }
+        documents:
+          type: object
+          additionalProperties: false
+          required: [cdl_front, cdl_back, medical_card]
+          properties:
+            cdl_front: { type: boolean }
+            cdl_back: { type: boolean }
+            medical_card: { type: boolean }
+        docs_received: { type: boolean }
+        displayed_recruiter: { type: string, minLength: 1, maxLength: 160 }
+        requested_by:
+          type: object
+          additionalProperties: false
+          required: [account_id, full_name]
+          properties:
+            account_id: { type: string, minLength: 1, maxLength: 160 }
+            full_name: { type: string, minLength: 1, maxLength: 160 }
+        requested_at: { type: string, format: date-time }
+
+    FranklinLeadIngestResult:
+      type: object
+      required: [ok, status]
+      properties:
+        ok: { type: boolean }
+        status: { type: string, enum: [created, already_exists] }
+        target_lead_id: { type: number }
+        target_case_id: { type: number }
+
+    RecruitingCaseDetail:
+      allOf:
+        - $ref: "#/components/schemas/RecruitingCaseListItem"
+        - type: object
+          required: [onboardingCaseId]
+          properties:
+            onboardingCaseId: { type: ["number", "null"] }
+            onboardingCaseNumber: { type: ["string", "null"] }
+            transferIdempotencyKey: { type: ["string", "null"] }
+
+    RecruitingEffect:
+      type: object
+      required: [id, effectKind, effectIdempotencyKey, status]
+      properties:
+        id: { type: number }
+        effectKind: { type: string, enum: [stage_transition, manager_review_task, onboarding_transfer] }
+        effectIdempotencyKey: { type: string }
+        status: { type: string, enum: [planned, applied, failed] }
+
+    RecruitingTimelineEvent:
+      type: object
+      required: [id, eventType, toStage, caseVersion, transitionIdempotencyKey, occurredAt, effects]
+      properties:
+        id: { type: number }
+        eventType: { type: string }
+        fromStage: { anyOf: [{ $ref: "#/components/schemas/RecruitingStage" }, { type: "null" }] }
+        toStage: { $ref: "#/components/schemas/RecruitingStage" }
+        actorUserId: { type: ["number", "null"] }
+        actorName: { type: ["string", "null"] }
+        caseVersion: { type: number }
+        transitionIdempotencyKey: { type: string }
+        occurredAt: { type: string, format: date-time }
+        effects:
+          type: array
+          items: { $ref: "#/components/schemas/RecruitingEffect" }
+
+    RecruitingTimelinePage:
+      type: object
+      required: [items, limit, nextBeforeId]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RecruitingTimelineEvent" }
+        limit: { type: number }
+        nextBeforeId: { type: ["number", "null"] }
+
+    CreateRecruitingCaseInput:
+      type: object
+      additionalProperties: false
+      required: [driverId, leadId, caseNumber, caseOwnerId, taskOwnerId, nextAction, nextActionDueAt, slaDeadlineAt]
+      properties:
+        driverId: { type: number, minimum: 1 }
+        leadId: { type: number, minimum: 1 }
+        caseNumber: { type: string, minLength: 1, maxLength: 80 }
+        caseOwnerId: { type: number, minimum: 1 }
+        taskOwnerId: { type: number, minimum: 1 }
+        stage: { $ref: "#/components/schemas/RecruitingStage" }
+        nextAction: { type: string, minLength: 1, maxLength: 500 }
+        nextActionDueAt: { type: string, format: date-time }
+        slaDeadlineAt: { type: string, format: date-time }
+        followUpDueAt: { type: string, format: date-time }
+        resumeStage: { $ref: "#/components/schemas/RecruitingStage" }
+        closedLostReason: { $ref: "#/components/schemas/RecruitingClosedLostReason" }
+        closedLostNote: { type: string, maxLength: 1000 }
+
+    RecruitingTransitionInput:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, targetStage]
+      properties:
+        expectedVersion: { type: number, minimum: 1 }
+        targetStage: { $ref: "#/components/schemas/RecruitingStage" }
+        nextAction: { type: string, minLength: 1, maxLength: 500 }
+        nextActionDueAt: { type: string, format: date-time }
+        managerId: { type: number, minimum: 1 }
+        managerDecision: { type: string, enum: [approve, return] }
+        followUpDueAt: { type: string, format: date-time }
+        resumeStage: { $ref: "#/components/schemas/RecruitingStage" }
+        closedLostReason: { $ref: "#/components/schemas/RecruitingClosedLostReason" }
+        closedLostNote: { type: string, maxLength: 1000 }
+
+    RecruitingManagerDecisionInput:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, decision, nextAction, nextActionDueAt]
+      properties:
+        expectedVersion: { type: number, minimum: 1 }
+        decision: { type: string, enum: [approve, return] }
+        nextAction: { type: string, minLength: 1, maxLength: 500 }
+        nextActionDueAt: { type: string, format: date-time }
+
+    RecruitingFutureFollowUpReturnInput:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, nextAction, nextActionDueAt]
+      properties:
+        expectedVersion: { type: number, minimum: 1 }
+        nextAction: { type: string, minLength: 1, maxLength: 500 }
+        nextActionDueAt: { type: string, format: date-time }
+
+    RecruitingTransferInput:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, recruiterName, sourceChannel]
+      properties:
+        expectedVersion: { type: number, minimum: 1 }
+        targetOnboardingCaseId: { type: number, minimum: 1 }
+        recruiterName: { type: string, minLength: 1, maxLength: 160 }
+        sourceChannel: { type: string, minLength: 1, maxLength: 160 }
+        initialNotes: { type: string, maxLength: 2000 }
+        caseOwnerName: { type: string, maxLength: 160 }
+
+    RecruitingMutationResult:
+      type: object
+      required: [status, case]
+      properties:
+        status: { type: string, enum: [created, duplicate, committed, replayed, returned, not_due] }
+        case: { $ref: "#/components/schemas/RecruitingCase" }
+        transitionIdempotencyKey: { type: ["string", "null"] }
+        effects:
+          type: array
+          items: { $ref: "#/components/schemas/RecruitingEffect" }
+        conflictCode: { type: ["string", "null"] }
+
+    RecruitingTransferResult:
+      type: object
+      required: [status, transfer, onboardingCase]
+      properties:
+        status: { type: string, enum: [completed, replayed] }
+        transfer:
+          type: object
+          required: [id, status, transferIdempotencyKey]
+          properties:
+            id: { type: number }
+            status: { type: string, enum: [pending, completed, failed] }
+            transferIdempotencyKey: { type: string }
+            onboardingCaseId: { type: ["number", "null"] }
+        onboardingCase:
+          type: object
+          required: [id, driverId, externalRecruitId, status]
+          properties:
+            id: { type: number }
+            driverId: { type: number }
+            externalRecruitId: { type: string }
+            status: { type: string }
+
+    RecruitingDashboard:
+      type: object
+      required: [total, active, overdue, dueSoon, unassigned, byStage, byLifecycle]
+      properties:
+        total: { type: number }
+        active: { type: number }
+        overdue: { type: number }
+        dueSoon: { type: number }
+        unassigned: { type: number }
+        byStage:
+          type: array
+          items: { $ref: "#/components/schemas/MetricBreakdown" }
+        byLifecycle:
+          type: array
+          items: { $ref: "#/components/schemas/MetricBreakdown" }
+
+    RecruitingQueueResponse:
+      type: object
+      required: [items, page, limit, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RecruitingCaseListItem" }
+        page: { type: number }
+        limit: { type: number }
+        total: { type: number }
+
+    RecruitingSheetSyncRun:
+      type: object
+      properties:
+        id: { type: number }
+        status: { type: string, enum: [running, succeeded, failed, busy] }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: ["string", "null"], format: date-time }
+        durationMs: { type: ["number", "null"] }
+        rowsFetched: { type: number }
+        rowsCreated: { type: number }
+        rowsUpdated: { type: number }
+        rowsUnchanged: { type: number }
+        rowsSkipped: { type: number }
+        rowsConflicted: { type: number }
+        rowsMissing: { type: number }
+        errorCount: { type: number }
+        errorMessage: { type: ["string", "null"] }
+
+    RecruitingSheetSyncStatus:
+      type: object
+      required: [enabled, workbookId, intervalMs, profileCount, lastRun]
+      properties:
+        enabled: { type: boolean }
+        workbookId: { type: string }
+        intervalMs: { type: number }
+        nextRunAt: { type: ["string", "null"], format: date-time }
+        profileCount: { type: number }
+        lastRun:
+          anyOf:
+            - $ref: "#/components/schemas/RecruitingSheetSyncRun"
+            - type: "null"
+
+    RecruitingSheetSyncResult:
+      type: object
+      required: [status, rowsFetched, rowsCreated, rowsUpdated, rowsUnchanged, rowsSkipped, rowsConflicted, rowsMissing, errorCount, startedAt, finishedAt]
+      properties:
+        status: { type: string, enum: [succeeded, failed, busy] }
+        runId: { type: ["number", "null"] }
+        rowsFetched: { type: number }
+        rowsCreated: { type: number }
+        rowsUpdated: { type: number }
+        rowsUnchanged: { type: number }
+        rowsSkipped: { type: number }
+        rowsConflicted: { type: number }
+        rowsMissing: { type: number }
+        errorCount: { type: number }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time }
+        message: { type: string }
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        retryable:
+          type: boolean
+      required:
+        - code
+        - message
+        - retryable
+
+    Driver:
+      type: object
+      required:
+        - id
+        - fullName
+        - driverType
+        - status
+        - stage
+        - recruiterName
+        - sourceChannel
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: number
+        fullName:
+          type: string
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        state:
+          type: ["string", "null"]
+        driverType:
+          type: string
+          enum: [owner_operator, company_driver]
+        status:
+          type: string
+          enum: [pre_hire, in_progress, pending_approval, approved, ready_for_dispatch, dispatched, fallout, on_hold]
+        stage:
+          type: string
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+        recruiterName:
+          type: string
+        sourceChannel:
+          type: string
+        assigneeId:
+          type: ["number", "null"]
+        assigneeName:
+          type: ["string", "null"]
+        operationalOwnerId:
+          type: ["number", "null"]
+        operationalOwnerName:
+          type: ["string", "null"]
+        truckVin:
+          type: ["string", "null"]
+        truckInfo:
+          type: ["string", "null"]
+        telegramGroupLinked:
+          type: boolean
+        readyForDispatch:
+          type: boolean
+        datatruckSyncStatus:
+          type: ["string", "null"]
+          enum: [pending, synced, failed, retry, "null"]
+        startDate:
+          type: ["string", "null"]
+        slaDeadline:
+          type: ["string", "null"]
+        blockers:
+          type: ["string", "null"]
+        nextBestAction:
+          type: ["string", "null"]
+        externalRecruitId:
+          type: ["string", "null"]
+        complianceGatesPassed:
+          type: boolean
+        completionPercent:
+          type: number
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    DriverOperationalRow:
+      type: object
+      required:
+        - id
+        - fullName
+        - driverType
+        - status
+        - recruiterName
+        - recruiterNameNormalized
+        - sourceChannel
+        - sourceChannelNormalized
+        - operationalOwnerId
+        - operationalOwnerName
+        - recommendedOwnerId
+        - recommendedOwnerName
+        - currentStepNumber
+        - currentStepKey
+        - currentStepLabel
+        - completedStepNumbers
+        - quality
+        - qualityReasons
+        - nextAction
+        - nextActionDue
+        - blockers
+        - waitingOnExternal
+        - phone
+        - phoneLast4
+        - completionPercent
+        - updatedAt
+      properties:
+        id: { type: number }
+        fullName: { type: string }
+        driverType: { type: string, enum: [owner_operator, company_driver] }
+        status: { type: string }
+        recruiterName: { type: string }
+        recruiterNameNormalized: { type: string }
+        sourceChannel: { type: string }
+        sourceChannelNormalized: { type: string }
+        operationalOwnerId: { type: ["number", "null"] }
+        operationalOwnerName: { type: ["string", "null"] }
+        recommendedOwnerId: { type: number }
+        recommendedOwnerName: { type: string }
+        currentStepNumber: { type: number }
+        currentStepKey: { type: string }
+        currentStepLabel: { type: string }
+        completedStepNumbers:
+          type: array
+          items: { type: number }
+        quality: { type: string, enum: [ok, needs_review] }
+        qualityReasons:
+          type: array
+          items: { type: string }
+        nextAction: { type: ["string", "null"] }
+        nextActionDue: { type: ["string", "null"], format: date-time }
+        blockers: { type: ["string", "null"] }
+        waitingOnExternal: { type: boolean }
+        phone:
+          type: ["string", "null"]
+          description: Full phone returned only after workspace-scoped view_drivers authorization.
+        phoneLast4: { type: ["string", "null"] }
+        completionPercent: { type: number }
+        updatedAt: { type: string, format: date-time }
+
+    DriverOperationalQueue:
+      type: object
+      required: [items, counts, total, stepCount, filterOptions]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/DriverOperationalRow" }
+        counts:
+          type: object
+          required: [all, dueToday, overdue, waitingBlocked, noNextAction, needsReview]
+          properties:
+            all: { type: number }
+            dueToday: { type: number }
+            overdue: { type: number }
+            waitingBlocked: { type: number }
+            noNextAction: { type: number }
+            needsReview: { type: number }
+        total: { type: number }
+        stepCount:
+          type: number
+          description: Number of canonical operational milestones in this workspace workflow.
+        filterOptions:
+          type: object
+          required: [owners, steps, sources]
+          properties:
+            owners:
+              type: array
+              items:
+                type: object
+                required: [id, name]
+                properties:
+                  id: { type: number }
+                  name: { type: string }
+            steps:
+              type: array
+              items:
+                type: object
+                required: [number, key, label]
+                properties:
+                  number: { type: number }
+                  key: { type: string }
+                  label: { type: string }
+            sources:
+              type: array
+              items: { type: string }
+
+    DriverInput:
+      type: object
+      required:
+        - fullName
+        - driverType
+        - recruiterName
+        - sourceChannel
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+        email:
+          type: string
+        state:
+          type: string
+        driverType:
+          type: string
+          enum: [owner_operator, company_driver]
+        recruiterName:
+          type: string
+        sourceChannel:
+          type: string
+        assigneeId:
+          type: number
+        truckVin:
+          type: string
+        startDate:
+          type: string
+        externalRecruitId:
+          type: string
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+
+    DriverUpdate:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+        stage:
+          type: string
+        priority:
+          type: string
+        assigneeId:
+          type: ["number", "null"]
+        truckVin:
+          type: string
+        truckInfo:
+          type: string
+        telegramGroupLinked:
+          type: boolean
+        startDate:
+          type: string
+        slaDeadline:
+          type: string
+        blockers:
+          type: string
+        nextBestAction:
+          type: string
+
+    ReadinessResult:
+      type: object
+      required:
+        - ready
+        - driverId
+        - failedGates
+      properties:
+        ready:
+          type: boolean
+        driverId:
+          type: number
+        failedGates:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+
+    DatatruckSync:
+      type: object
+      required:
+        - id
+        - driverId
+        - syncStatus
+        - createdAt
+      properties:
+        id:
+          type: number
+        driverId:
+          type: number
+        syncStatus:
+          type: string
+          enum: [pending, synced, failed, retry]
+        attemptNumber:
+          type: number
+        errorMessage:
+          type: ["string", "null"]
+        syncedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    OnboardingTask:
+      type: object
+      required:
+        - id
+        - driverId
+        - title
+        - taskType
+        - status
+        - createdAt
+      properties:
+        id:
+          type: number
+        driverId:
+          type: number
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        taskType:
+          type: string
+          enum: [document_collection, verification, training, admin, communication, compliance]
+        status:
+          type: string
+          enum: [pending, in_progress, blocked, completed, skipped]
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+        assigneeId:
+          type: ["number", "null"]
+        assigneeName:
+          type: ["string", "null"]
+        dueDate:
+          type: ["string", "null"]
+        completedAt:
+          type: ["string", "null"]
+        isMandatory:
+          type: boolean
+        createdAt:
+          type: string
+        updatedAt:
+          type: ["string", "null"]
+
+    OnboardingTaskInput:
+      type: object
+      required:
+        - title
+        - taskType
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        taskType:
+          type: string
+          enum: [document_collection, verification, training, admin, communication, compliance]
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+        assigneeId:
+          type: number
+        dueDate:
+          type: string
+        isMandatory:
+          type: boolean
+
+    OnboardingTaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, blocked, completed, skipped]
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+        assigneeId:
+          type: ["number", "null"]
+        dueDate:
+          type: string
+        isMandatory:
+          type: boolean
+
+    DriverDocument:
+      type: object
+      required:
+        - id
+        - driverId
+        - docType
+        - docName
+        - status
+        - createdAt
+      properties:
+        id:
+          type: number
+        driverId:
+          type: number
+        docType:
+          type: string
+          enum: [cdl_front, cdl_back, medical_card, application, w9, insurance, dot_inspection, lease_agreement, i9, w4, direct_deposit, offer_letter, mvr_placeholder, psp_placeholder, clearinghouse_consent, drug_test_result, road_test, eld_agreement, other]
+        docName:
+          type: string
+        status:
+          type: string
+          enum: [pending, received, verified, expired, rejected]
+        expiryDate:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        uploadedAt:
+          type: ["string", "null"]
+        verifiedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    DriverDocumentInput:
+      type: object
+      required:
+        - docType
+        - docName
+      properties:
+        docType:
+          type: string
+          enum: [cdl_front, cdl_back, medical_card, application, w9, insurance, dot_inspection, lease_agreement, i9, w4, direct_deposit, offer_letter, mvr_placeholder, psp_placeholder, clearinghouse_consent, drug_test_result, road_test, eld_agreement, other]
+        docName:
+          type: string
+        status:
+          type: string
+          enum: [pending, received, verified, expired, rejected]
+        expiryDate:
+          type: string
+        notes:
+          type: string
+
+    DriverDocumentUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, received, verified, expired, rejected]
+        expiryDate:
+          type: string
+        notes:
+          type: string
+
+    ActivityEntry:
+      type: object
+      required:
+        - id
+        - driverId
+        - actorName
+        - action
+        - createdAt
+      properties:
+        id:
+          type: number
+        driverId:
+          type: number
+        actorName:
+          type: string
+        actorRole:
+          type: ["string", "null"]
+        action:
+          type: string
+        detail:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    Comment:
+      type: object
+      required:
+        - id
+        - driverId
+        - authorName
+        - body
+        - createdAt
+      properties:
+        id:
+          type: number
+        driverId:
+          type: number
+        authorName:
+          type: string
+        authorRole:
+          type: ["string", "null"]
+        body:
+          type: string
+        createdAt:
+          type: string
+
+    CommentInput:
+      type: object
+      required:
+        - body
+      properties:
+        body:
+          type: string
+          minLength: 1
+        authorName:
+          type: string
+        authorRole:
+          type: string
+
+    ChecklistItem:
+      type: object
+      required:
+        - id
+        - driverId
+        - gateKey
+        - label
+        - gateCategory
+        - status
+        - isMandatory
+        - appliesTo
+      properties:
+        id:
+          type: number
+        driverId:
+          type: number
+        gateKey:
+          type: string
+        label:
+          type: string
+        gateCategory:
+          type: string
+          enum: [shared_pre_hire, owner_operator, company_driver]
+        appliesTo:
+          type: string
+          enum: [both, owner_operator, company_driver]
+        status:
+          type: string
+          enum: [pending, in_progress, passed, failed, na]
+        isMandatory:
+          type: boolean
+        notes:
+          type: ["string", "null"]
+        completedAt:
+          type: ["string", "null"]
+        sortOrder:
+          type: number
+
+    ChecklistItemUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, in_progress, passed, failed, na]
+        notes:
+          type: string
+
+    HiredEventInput:
+      type: object
+      required:
+        - fullName
+        - driverType
+        - recruiterName
+        - sourceChannel
+        - externalRecruitId
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        phone:
+          type: string
+        email:
+          type: string
+        state:
+          type: string
+        driverType:
+          type: string
+          enum: [owner_operator, company_driver]
+        recruiterName:
+          type: string
+        sourceChannel:
+          type: string
+        externalRecruitId:
+          type: string
+          minLength: 1
+        truckVin:
+          type: string
+        assigneeId:
+          type: number
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+
+    DashboardMetrics:
+      type: object
+      required:
+        - totalActive
+        - readyForDispatch
+        - inProgress
+        - pendingApproval
+        - fallout
+        - criticalSla
+        - ownerOperators
+        - companyDrivers
+        - avgCompletionPercent
+        - byStatus
+        - byStage
+        - weeklyHired
+        - complianceExceptionCount
+      properties:
+        totalActive:
+          type: number
+        readyForDispatch:
+          type: number
+        inProgress:
+          type: number
+        pendingApproval:
+          type: number
+        fallout:
+          type: number
+        criticalSla:
+          type: number
+        ownerOperators:
+          type: number
+        companyDrivers:
+          type: number
+        avgCompletionPercent:
+          type: number
+        complianceExceptionCount:
+          type: number
+        byStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricBreakdown"
+        byStage:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricBreakdown"
+        weeklyHired:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeeklyCount"
+
+    MetricBreakdown:
+      type: object
+      required:
+        - label
+        - count
+      properties:
+        label:
+          type: string
+        count:
+          type: number
+
+    WeeklyCount:
+      type: object
+      required:
+        - week
+        - count
+      properties:
+        week:
+          type: string
+        count:
+          type: number
+
+    ComplianceException:
+      type: object
+      required:
+        - driverId
+        - driverName
+        - driverType
+        - exceptionType
+        - detail
+        - severity
+        - createdAt
+      properties:
+        driverId:
+          type: number
+        driverName:
+          type: string
+        driverType:
+          type: string
+        exceptionType:
+          type: string
+          enum: [expired_doc, failed_gate, missing_doc, overdue_task, sla_breach]
+        detail:
+          type: string
+        severity:
+          type: string
+          enum: [critical, high, medium, low]
+        createdAt:
+          type: string
+
+    WorkQueueItem:
+      type: object
+      required:
+        - driverId
+        - driverName
+        - driverType
+        - priority
+        - slaState
+        - nextBestAction
+        - stage
+        - assigneeName
+        - updatedAt
+      properties:
+        driverId:
+          type: number
+        driverName:
+          type: string
+        driverType:
+          type: string
+        priority:
+          type: string
+          enum: [critical, high, medium, low]
+        slaState:
+          type: string
+          enum: [on_track, at_risk, breached, completed]
+        nextBestAction:
+          type: ["string", "null"]
+        stage:
+          type: string
+        assigneeName:
+          type: ["string", "null"]
+        blockers:
+          type: ["string", "null"]
+        slaDeadline:
+          type: ["string", "null"]
+        completionPercent:
+          type: number
+        updatedAt:
+          type: string
+
+    AppUser:
+      type: object
+      required:
+        - id
+        - name
+        - role
+        - email
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, onboarding_specialist, recruiter_readonly, compliance, dispatch]
+        avatarInitials:
+          type: string
+
+    RoleSwitchInput:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: number
+
+    WorkflowTemplate:
+      type: object
+      required:
+        - id
+        - name
+        - driverType
+        - description
+        - steps
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        driverType:
+          type: string
+          enum: [owner_operator, company_driver, shared]
+        description:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateStep"
+
+    TemplateStep:
+      type: object
+      required:
+        - sortOrder
+        - gateKey
+        - label
+        - category
+        - isMandatory
+        - appliesTo
+      properties:
+        sortOrder:
+          type: number
+        gateKey:
+          type: string
+        label:
+          type: string
+        category:
+          type: string
+        isMandatory:
+          type: boolean
+        appliesTo:
+          type: string
+        description:
+          type: ["string", "null"]
+
+    IntegrationAdapter:
+      type: object
+      required:
+        - id
+        - name
+        - provider
+        - status
+        - description
+        - configFields
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        provider:
+          type: string
+        status:
+          type: string
+          enum: [connected, disconnected, demo]
+        description:
+          type: string
+        configFields:
+          type: array
+          items:
+            $ref: "#/components/schemas/IntegrationConfigField"
+        logoUrl:
+          type: ["string", "null"]
+
+    IntegrationConfigField:
+      type: object
+      required:
+        - key
+        - label
+        - fieldType
+        - required
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        fieldType:
+          type: string
+          enum: [text, password, url, select]
+        required:
+          type: boolean
+        placeholder:
+          type: ["string", "null"]
+        options:
+          type: array
+          items:
+            type: string
+
+    RecruiterReportRow:
+      type: object
+      required:
+        - recruiterName
+        - sourceChannel
+        - totalHired
+        - inProgress
+        - readyForDispatch
+        - fallout
+      properties:
+        recruiterName:
+          type: string
+        sourceChannel:
+          type: string
+        totalHired:
+          type: number
+        inProgress:
+          type: number
+        readyForDispatch:
+          type: number
+        fallout:
+          type: number
+        avgDaysToDispatch:
+          type: ["number", "null"]

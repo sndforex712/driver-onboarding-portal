@@ -1,0 +1,31 @@
+DEV/DEMO workflow change authorized by the user. Replace the current 13-step operational onboarding sequence with this exact 11-step sequence and ownership boundary:
+
+Mason / Wayne — onboarding_specialist responsibility:
+1. Application
+2. Clearinghouse
+3. Drug Test Scheduled
+4. Medical Card
+5. Drug Test Completed
+6. Annual Inspection
+
+Hardy — manager responsibility:
+7. Contract
+8. Tag
+9. Form 2290
+10. Registration
+11. Plate Number
+
+Requirements:
+1. Form 2290 belongs only to Hardy's manager segment. It must not appear in the Mason/Wayne segment or be duplicated.
+2. Use the exact corrected labels/capitalization above. Clearinghouse is one word. Use “Drug Test Scheduled”, “Drug Test Completed”, “Form 2290”, and “Registration”.
+3. Update every real source of truth needed for the existing app: DB workflow template/config for Franklin DEV workspace, operational projection, API/OpenAPI/Zod/generated contracts if step enums/counts are encoded, progress denominators, All Drivers filters/status badges, driver detail/checklist, manager board/handoff rules, dashboards, tests, and any step-number assumptions.
+4. Handoff boundary: Steps 1–6 are onboarding_specialist work; after Step 6, responsibility moves to Hardy/manager for Steps 7–11. Preserve current server-side RBAC and owner filtering.
+5. Do not invent completion data or change any of the 55 drivers’ name, phone, completion state, ownership, recruiter, source, notes, or business fields. They remain unassigned until the user decides assignment.
+6. Preserve passwordless DEV login, phone Copy/Call actions, empty-workspace/backfill guard, sessions, users, roles, and all unrelated behavior.
+7. Apply only to DEV workspace_id=1 and development configuration. Do not publish, republish, deploy, access production/Hello World/franklins.ai, Google Sheets, or external systems.
+8. Use an additive/safe migration or idempotent DEV template sync that preserves driver records. If current stored template/completion rows make the change ambiguous, audit first and stop before destructive mutation.
+9. Verify exact step count=11, exact order/labels, unique Form 2290, ownership split 1–6 vs 7–11, progress denominator /11, Hardy manager access, Mason/Wayne restriction, cross-owner denial, and 55 driver names/phones unchanged.
+10. Run relevant API/frontend tests, typechecks, builds, diff check, restart only existing DEV workflows, and visually inspect /drivers and manager board.
+11. Finish with changed files/config, exact test results, and DEV preview URL. No mockups or planning task.
+
+Proceed directly within these boundaries.

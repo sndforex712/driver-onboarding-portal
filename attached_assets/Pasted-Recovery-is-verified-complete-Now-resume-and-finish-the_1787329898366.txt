@@ -1,0 +1,24 @@
+Recovery is verified complete. Now resume and finish the previously authorized Google Sheet integration end to end.
+
+Source (READ-ONLY): https://docs.google.com/spreadsheets/d/1x0P28BzXkX1tAMCxGEc7p1_DFHDO8cAuIqTs3TyMfTc/edit?usp=sharing
+
+Non-negotiable data boundary:
+- Never write to, edit, clear, append, format, or delete anything in the Google Sheet.
+- Use only an anonymous/public GET export or other strictly read-only retrieval.
+- Do not request write scopes or credentials.
+- Database changes are allowed only in the Recruiting subsystem; do not alter existing Onboarding data or behavior.
+
+Required behavior:
+1. Add a production-safe one-way importer that pulls the Sheet every 15 minutes while the API server is running. Also provide a safe manual trigger/status endpoint for verification.
+2. Initial pull imports all usable driver rows into Recruiting. Subsequent pulls are idempotent: new Sheet rows create records, changed rows update their imported snapshot/profile, and unchanged rows do nothing.
+3. Prevent duplicates deterministically. Use a stable external row identity plus normalized phone as the collision guard. Never create a second Recruiting case for the same source row/phone. Preserve and report existing phone collisions rather than merging destructively.
+4. If a previously imported Sheet row disappears, mark the import/profile as source-missing/inactive with an audit event; never delete a Recruiting case, driver, task, event, or Onboarding record.
+5. Store all supplied legacy fields without losing information, including priority/timing, name, phone, truck year, driver type, note/status text, recruiter, source, every checklist flag (Application, Clearing House, Drug test, Plate Number, TG, TITLE, ANN INSP, 2290, Contract, med card), tracking number, and email. Preserve raw row JSON for traceability.
+6. Map Sheet rows into the existing Recruiting workflow conservatively. Do not invent completion. Checklist flags may populate an imported legacy profile and audit trail, but must not bypass the required Recruiter → Manager → Recruiter handoff or existing transition guards.
+7. Imported records must have valid case owner, task owner, next action, and deadline. Resolve recruiter names to existing users case-insensitively; if missing, create/internalize recruiter-only identities without public email delivery. Never grant manager/admin roles.
+8. Add schema migrations, repository/service code, config/env flags, scheduler lifecycle, structured sync-run logging/status, and focused tests. Guard concurrent runs and retries. Use fetch timeouts/backoff and do not let a Sheet outage crash the API.
+9. Run the migration, perform the initial real read-only import from the provided Sheet, then verify counts: rows fetched, created, updated, unchanged, skipped, collisions, source-missing, errors. Show several mapped examples but do not expose unnecessary sensitive data.
+10. Verify typecheck/build, existing Recruiting 20/20 and Manager Board 39/39 regressions, new importer tests, API health, and real browser /recruiting rendering. Leave normal web/API workflows running.
+11. Report exact files changed, migration applied, configuration used, next scheduled run, last-sync status, import counts, tests, and live preview URL.
+
+Do not stop at a plan. Implement, migrate, run the initial sync, verify the live UI, and keep the Sheet untouched.

@@ -1,0 +1,36 @@
+Redesign ONLY the grouped active Recruiting All Cases board presentation using the following approved UI/UX specification. This is a UI-only professional information-architecture pass, not a recolor or visual-theme redesign.
+
+Hard constraints:
+- Preserve the current dark green/orange palette, existing brand identity, all data, filtering/search/sort, case click behavior, owners, Task Owners, API/database/sync, Google Sheet, 21/23/23 grouping, and the dynamic exactly-7-visible-rows independent scrolling behavior.
+- Do not add images, gradients, decorative cards, heavy shadows, new data, or business logic.
+- Use TDD: first add focused failing tests for the new column information hierarchy and responsive presentation; then implement minimal changes.
+- Inspect the existing source and test conventions before editing. Keep changes narrow and reversible.
+
+Professional desktop table information order:
+1. DRIVER — driver name as the strongest row text (system sans, 15–16px, semibold); case ID below in smaller muted monospace.
+2. CONTACT — phone number immediately after the driver, single line, 14–15px, tabular numerals, never split across lines; missing value is an em dash.
+3. TRUCK — driver type first, year/make second, compact two-line layout; missing pieces use em dash.
+4. PROGRESS — retain the current driver-status dot timeline, current label, and x/16 count; incorporate the current Stage chip/value into this area so Stage is not a separate redundant wide column.
+5. OWNERS — Case Owner and Task Owner stacked with explicit compact labels C and T, aligned consistently.
+6. SLA — state first, due date second; keep text indicator so color is not the only signal.
+
+Typography and density:
+- Use the project/system sans-serif for names, phone numbers, vehicle info, and normal readable content.
+- Keep monospace only for case IDs, compact operational labels, step counts, and small metadata.
+- Use a consistent type scale (12 / 14 / 16 / 20–24) and line-height; avoid the current all-uppercase/all-monospace visual weight.
+- Keep rows compact but readable, with consistent vertical alignment and spacing based on the project spacing scale.
+- Section header hierarchy: worker name as h2; row range as subordinate metadata, not part of the same oversized title. Responsibility and counts should be separate compact metadata items, not one long sentence.
+- Keep sticky column headers and clear hover/focus states. Row/case interaction must be keyboard accessible and focus must not be hidden by sticky UI.
+
+Responsive:
+- At narrow/mobile widths, use a contained compact row/card presentation or an equally readable layout that prioritizes Driver + Contact first, then Progress, Owners, SLA, without page-level horizontal overflow.
+- Phone numbers must remain visible and readable without horizontal hunting.
+- Dynamic seven-row measurement must continue to adapt to the new rendered row/card heights at desktop and mobile.
+- Preserve accessible region labels and independent mouse-wheel/touch scrolling for Hardy, Mason, and Wayne.
+
+Verification:
+- Focused new tests must pass, then frontend typecheck and production build.
+- Restart only the web workflow if needed.
+- Verify no data counts or ownership changed: Hardy 21, Mason 23, Wayne 23.
+- Verify exactly 7 full rows are visible in each region, all rows remain in DOM, headers remain sticky, and no console errors/warnings.
+- Report exact files changed, tests, and what was intentionally untouched.

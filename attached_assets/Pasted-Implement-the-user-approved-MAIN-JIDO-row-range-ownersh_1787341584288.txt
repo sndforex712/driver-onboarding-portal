@@ -1,0 +1,35 @@
+Implement the user-approved MAIN JIDO row-range ownership model and a three-section Recruiting board.
+
+AUTHORITATIVE ROW OWNERSHIP
+- Hardy (canonical Franklin membership/user ID 22): physical MAIN JIDO rows 2-23 inclusive. Rows 2-15 are Setup; row 16 is a section label and excluded; rows 17-23 are Package Sending. 21 qualifying source rows.
+- Mason (canonical ID 32): physical rows 25-48 inclusive. Row 24 is a section label; rows 25-33 are Drug Test; row 34 is excluded; rows 35-48 are first half of 1st Process. 23 qualifying rows.
+- Wayne (canonical ID 25): physical rows 49-71 inclusive. 23 qualifying rows.
+- Google Sheet remains strictly read-only. Task Owner and manager handoff must never change.
+- The canonical active scope remains the already-fixed MAIN JIDO physical rows 2-71 only, excluding section/blank rows, demo, other tabs/ranges. Current source proof is 67 qualifying rows, 5 duplicate/conflict mappings, 62 canonical cases.
+
+FIRST: SAFE READ-ONLY PREVIEW
+1. Inspect the five duplicate/conflict mappings. Report each source row/name and canonical case ID, and whether any single canonical case maps to rows belonging to different workers.
+2. If any canonical case crosses Hardy/Mason/Wayne ranges, STOP before mutation and report the exact conflicts. Do not invent precedence.
+3. If every duplicate stays within one worker range, preview exact per-worker qualifying source-row counts, unique-case counts, proposed Case Owner changes, already-compliant, Task Owner changes (must be 0), missing/unmatched (must be 0), and policy violations (must be 0).
+
+TDD + DATA
+- Write failing tests first for boundaries 2/23 Hardy, 24 excluded, 25/48 Mason, 49/71 Wayne, 72 excluded; rows 16/24/34 excluded; exact workbook/tab required; blank/section rows excluded; manual cases not row-assigned; duplicate same-range collapses safely; cross-range duplicate blocks apply; Task Owner preserved; transaction rollback; audit once/idempotent rerun.
+- Implement one canonical row-assignment policy used by preview, one-time apply, future read-only Sheet sync reconciliation, and UI grouping. Sheet cases should follow physical row ownership after each sync; manual cases keep submitted owners.
+- Apply once transactionally only if preview gates pass. Case Owner only; exact audit event with stable operation key. Second apply no-op.
+
+THREE SEPARATE UI SECTIONS
+On /recruiting?view=all&lifecycle=active, render three clearly separated, compact sections in this order:
+1. HARDY — ROWS 2-23 — SETUP + PACKAGE SENDING
+2. MASON — ROWS 25-48 — APPLICATION / CLEARINGHOUSE / DRUG TEST
+3. WAYNE — ROWS 49-71 — APPLICATION / CLEARINGHOUSE / DRUG TEST
+Each section header must show responsible worker, row range, responsibility, qualifying source-row count, and visible unique-case count. Render existing case rows/cards inside the section; do not redesign the visual language. Preserve current search/stage/lifecycle/sort behavior. Avoid pagination splitting a worker section; current 62 cases may be fetched/rendered in one grouped active-board view, while Priority Queue and unrelated views remain unchanged.
+- Use semantic h2/section labels, keyboard-accessible optional collapse controls, responsive mobile stacking, no horizontal overflow.
+- The five collapsed duplicate source rows should be represented transparently in section count metadata without rendering duplicate case cards.
+
+VERIFY
+- Focused RED/GREEN tests, Sheet Sync, Recruiting, ordering, Manager Board, typecheck/full build.
+- Restart API/web.
+- Browser test active board desktop and 390px mobile: three sections in correct order, exact labels/counts, every card in correct section, Case Owner matches section, Task Owner preserved, filters/search/sorting still work, console/network clean.
+- Report exact preview/apply counts by Hardy/Mason/Wayne and duplicate mapping details. No Google Sheet write.
+
+Proceed autonomously. Stop before mutation only for cross-range duplicate ambiguity or failed safety gates.

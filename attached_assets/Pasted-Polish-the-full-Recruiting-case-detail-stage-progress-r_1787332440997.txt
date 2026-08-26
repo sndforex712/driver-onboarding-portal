@@ -1,0 +1,22 @@
+Polish the full Recruiting case-detail stage progress rail shown in the user's screenshot. It is currently not production quality: 16 labels overlap, connectors run through text, spacing is inconsistent, the native scrollbar is visually dominant, and the right edge is cramped.
+
+Implement a high-quality responsive redesign without changing any workflow/data behavior:
+
+1. Reuse the existing shared canonical stage-progress utility and colors. Do not duplicate or reorder stages.
+2. Desktop/tablet (>=768):
+- Render a horizontally scrollable milestone rail with a fixed, generous minimum width per stage so labels never overlap.
+- Each stage owns a real grid/flex column; connector lines stay centered on dots and never cross labels.
+- Labels sit in a dedicated label row below the dots, use at most two balanced lines, consistent line-height, fixed vertical space, and no absolute-position collisions.
+- Completed = green plus completed semantics, current = amber with aria-current=step, future = muted; do not rely only on color.
+- Automatically bring the current stage into view on initial render without causing page layout shift.
+- Use a subtle project-aligned scroll affordance/scrollbar instead of the thick native gray bar; keep keyboard and touch horizontal scrolling fully usable.
+3. Mobile (<768):
+- Do not squeeze all 16 labels into one line.
+- Show a compact accessible progress header: current stage prominently, Step X of 16, percentage/progress bar, and previous/next stage context. No horizontal page overflow.
+4. The case detail card must have stable height, clean padding, and safe right spacing so the floating helper/widget does not cover milestones. Do not move or modify unrelated global tooling unless the overlap is caused by our layout.
+5. Preserve the compact Queue/All Cases Driver Status rail that was just added. Share primitives/utilities where helpful, but do not regress it.
+6. Add component/regression coverage for long adjacent labels (Connected Prequalified, Clearinghouse Pending, Compliance Documents Pending), first/middle/terminal stage, unknown fallback, and responsive render modes.
+7. Verify case /recruiting/cases/86 and at least one middle/terminal-stage case at 1440, 1024, 768, and 390 widths. Check for zero label overlap, zero page-level horizontal overflow, readable current stage, keyboard accessibility, clean console/network, and no change to live counts/data.
+8. Run frontend/API typechecks, build, existing stage 4/4, Recruiting 20/20, sync/list 4/4, Manager Board 39/39, restart web workflow, and verify the live UI.
+
+Do not stop at a plan. Implement and visually verify before reporting.

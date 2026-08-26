@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Franklins AI Driver Onboarding"
+description = "A standalone development/demo web app for Franklins AI driver onboarding operations. Provides a professional dark-green operations interface with role-based views (admin, onboarding specialist, recruiter read-only, compliance, dispatch), complete Owner Operator and Company Driver onboarding workflows, priority work queue with SLA states, dashboard metrics, compliance exception queue, and integrations page with demo adapters. Uses seeded demo data only — completely isolated from production."
+version = "1.0.0"
+id = "artifacts/franklins-onboarding"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23219
+
+[services.development]
+run = "pnpm --filter @workspace/franklins-onboarding run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/franklins-onboarding", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/franklins-onboarding/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23219"
+BASE_PATH = "/"

@@ -1,0 +1,18 @@
+Please improve the live Recruiting list UI based on the user's screenshot. The current "Source" column exposes a long internal identifier such as google-sheet:<workbook>:MAIN JIDO FREIGHT LLC:98. That is implementation metadata and must never be shown to operational users.
+
+Required UX:
+1. Remove the Source column from all Recruiting list/table views (Priority Queue and All Cases). Do not merely truncate or rename the technical source.
+2. Replace it with a compact "Driver Info" column sourced from the imported legacy profile:
+   - normalized/formatted phone number
+   - driver type (OTR / Regional / Local)
+   - truck year + make/model when available
+   Use real stored values only; show an em dash for missing values and never fabricate.
+3. Keep the driver name and case ID in the first column, stage/action/SLA/owners as they are. The new info cell should have a clear two-line hierarchy, not wrap into a tall block, and include accessible text/labels.
+4. Technical source IDs must remain available only internally for audit/debugging and must not appear in the Queue, All Cases, Dashboard, Pipeline, or ordinary case header. A dedicated manager-only Sheet Sync/audit screen may retain non-sensitive technical status, but not clutter operational tables.
+5. If the list API does not yet expose legacy phone/driverType/truck fields, extend the repository/OpenAPI/generated client additively and efficiently (avoid N+1 queries).
+6. Preserve all existing filtering, sorting, pagination, transitions, JIDO-main-tab visibility rules, Recruiting/Onboarding data, and handoff guards.
+7. Follow the existing dark green design system. Verify desktop plus narrow/mobile behavior; on small screens phone must remain readable and secondary truck/type details may collapse gracefully.
+8. Add focused regression coverage for imported and manually created cases with missing profile data.
+9. Run typecheck/build, Recruiting, Manager Board, Sheet sync tests, API health, and a real browser check of /recruiting and ?view=all&lifecycle=active. Confirm the ugly google-sheet identifier is absent from rendered operational UI and the Driver Info content is populated.
+
+Do not stop at a plan. Implement, restart workflows if needed, verify in the browser, and report the changed files and working link.

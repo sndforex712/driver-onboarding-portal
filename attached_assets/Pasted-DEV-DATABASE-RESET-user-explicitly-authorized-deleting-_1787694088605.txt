@@ -1,0 +1,15 @@
+DEV DATABASE RESET — user explicitly authorized deleting all current driver information so the /drivers onboarding board can be rebuilt from scratch.
+
+Scope and safety:
+1. DEV/DEMO only. Never access or mutate production, published deployment, Hello World, franklins.ai, Google Sheets, or any external integration.
+2. First perform a read-only schema/dependency audit and report counts for the exact driver/onboarding tables that feed /drivers. Do not print PII or row contents.
+3. Before deletion, create a timestamped recoverable DEV-only database backup/export containing the affected driver/onboarding tables and their dependent records. Store it privately in the project workspace, never in a public artifact, and report only its path and size—not its contents.
+4. Delete all driver/onboarding records shown on /drivers and their directly dependent child records in one transaction, respecting foreign keys. This includes driver progress/checklist, ownership/handoff, documents/metadata, events/notes/tasks tied to those driver records, but only after resolving exact tables from the current schema.
+5. Preserve database schema/migrations, app configuration, workspaces, users, demo accounts, sessions/auth infrastructure, roles/memberships, and the new passwordless DEV login.
+6. Preserve Recruiting-domain leads/cases unless a foreign-key dependency makes deletion impossible; if so, stop before deleting and report the exact blocker rather than broadening scope.
+7. After deletion, verify affected table counts are zero, /drivers loads an empty state for Admin/Hardy/Mason/Wayne, logins/logout still work, unauthorized access remains denied, and no unrelated table counts changed.
+8. Run relevant API/frontend typechecks/tests only if code changes are unexpectedly required. Prefer data-only reset with no code edits.
+9. Do not publish, republish, deploy, or modify external/real data.
+10. Finish with before/after non-sensitive counts, backup path/size, verification results, and DEV preview URL.
+
+Proceed directly. If scope cannot be isolated safely, stop before mutation and report why.

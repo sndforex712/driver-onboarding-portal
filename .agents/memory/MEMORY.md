@@ -1,0 +1,26 @@
+- [Franklins Onboarding Architecture](franklins-onboarding-arch.md) — monorepo: React/Vite frontend + Express 5 API, shared Drizzle/PG, OpenAPI-first with Orval codegen
+- [Checklist Gate System](checklist-gates.md) — unified 11-step flow; gateCategory on TS objects maps to `category` in template_steps (not gateCategory)
+- [Seed Idempotency Guard](seed-guard.md) — seed checks app_users count; if prior run partially succeeded, truncate all tables before re-running
+- [Authorization Architecture](auth-architecture.md) — default-deny: authorize() called independently in every handler; no middleware trust; lib/db + lib/api-zod + lib/api-client-react all need tsc --build when their src changes
+- [Operational Milestone Access](operational-milestone-access.md) — specialists need both current-driver and canonical-gate ownership; managers retain operational override
+- [Leads System](leads-system.md) — leads table owns phone+name dedup; drivers.lead_id FK → leads (not reverse); enrichLeads() must fetch ALL workspace leads for name map (not just filtered subset)
+- [Manager Board System](manager-board.md) — 36h sprint kanban; pure helpers in lib/manager-board-utils.ts (no DB deps); route re-exports them; 51 mgr_NNN demo drivers in ensureWorkspaceData; lib/db needs tsc --build after schema changes
+- [Stage History System](stage-history.md) — append-only driver_stage_history table; 6 formal stages (hired→pre_hire→onboarding→dispatch_ready→active→fallout); recordStageTransition() exported from routes/stage.ts and imported by events/drivers/checklist routes
+- [Onboarding Case System](onboarding-cases.md) — onboarding_cases table (1:1 with driver, unique externalRecruitId per workspace); idempotency gate for hired event; preserves recruiter/source/notes; merges docs by docType dedup on replay
+- [Franklin Lead Handoff](franklin-lead-handoff.md) — Franklin intake stays lead-only until transactional Recruiting-to-Onboarding transfer creates and binds its driver exactly once
+- [API Server Zod Pattern](api-server-zod.md) — api-server has no direct zod dep; use @workspace/api-zod generated schemas + plain TS for extra fields; never import zod/v4 in api-server
+- [Role System](role-system.md) — 6 roles: owner_admin, manager, recruiter, onboarding_specialist, compliance_reviewer, dispatcher_readonly; capability matrix in lib/role-guard.ts
+- [Recruiting Boundary](recruiting-boundary.md) — Recruiting precedes Onboarding; the second Recruiter is a task-owner handoff, not a duplicate stage.
+- [Drizzle Migration Metadata](drizzle-migration-metadata.md) — Drizzle 0.31 migration checks require generated snapshots and a relative migration output path.
+- [Isolated Repository Tests](isolated-repository-tests.md) — direct strip-types tests need a temporary local-import rewrite; production source must retain extensionless imports for tsc.
+- [Generated client request headers](generated-client-request-headers.md) — generated API calls spread headers into plain objects; idempotency wrappers must pass a plain record, not a Headers instance.
+- [Orval barrel exports](orval-barrel-exports.md) — regenerate contracts from OpenAPI, but preserve api-zod’s namespaced model exports to avoid validator/type-name collisions.
+- [Legacy Sheet Import Boundary](legacy-sheet-import-boundary.md) — operational Recruiting imports and displays only the MAIN JIDO FREIGHT LLC workbook tab.
+- [Recruiting Operational Metadata](recruiting-operational-metadata.md) — raw source IDs are audit-only; operational Recruiting surfaces use safe driver information and origin labels.
+- [Case Detail Progress Rail](case-detail-progress-rail.md) — shared stage utility powers responsive milestone/compact rails; preserve separate workflow action and timeline behavior.
+- [Driver Status Presentation Sequence](driver-status-presentation-sequence.md) — driver-status UI projects 14 visible milestones while canonical workflow order keeps all 16 stages.
+- [Recruiting Default Ordering](recruiting-default-ordering.md) — active queues default to furthest progress first; explicit SLA, due-date, and newest modes remain distinct server-side orders.
+- [Recruiting Stage Entry Audit](recruiting-stage-entry-audit.md) — stage-entry timestamps must exclude Sheet snapshots/imports and transfer bookkeeping, even when they repeat a stage value.
+- [All Drivers operational routing](all-drivers-operational-routing.md) — 13-milestone queue derives ownership from persisted checklist state; supporting gates are not data-quality anomalies.
+- [Development migration idempotency](development-migration-idempotency.md) — reconcile dev schema/journal drift with safe additive migrations, never journal bypasses.
+- [Empty DEV workspace resets](empty-dev-workspace-resets.md) — destructive Franklin DEV resets require explicit bootstrap suppression or restart recreates Manager Board fixtures.

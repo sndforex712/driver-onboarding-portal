@@ -1,0 +1,48 @@
+import { Router, type IRouter } from "express";
+import healthRouter from "./health";
+import driversRouter from "./drivers";
+import tasksRouter from "./tasks";
+import documentsRouter from "./documents";
+import checklistRouter from "./checklist";
+import activityRouter from "./activity";
+import commentsRouter from "./comments";
+import eventsRouter from "./events";
+import dashboardRouter from "./dashboard";
+import usersRouter from "./users";
+import templatesRouter from "./templates";
+import integrationsRouter from "./integrations";
+import utilsRouter from "./utils";
+import workspacesRouter from "./workspaces";
+import leadsRouter from "./leads";
+import stageRouter from "./stage";
+import managerBoardRouter from "./manager-board";
+import recruitingRouter from "./recruiting";
+import recruitingSheetSyncRouter from "./recruiting-sheet-sync";
+import franklinLeadIngestRouter from "./franklin-lead-ingest";
+import authRouter from "./auth";
+
+const router: IRouter = Router();
+
+router.use(healthRouter);
+router.use(authRouter);
+router.use(driversRouter);
+router.use(tasksRouter);
+router.use(documentsRouter);
+router.use(checklistRouter);
+router.use(activityRouter);
+router.use(commentsRouter);
+router.use(eventsRouter);
+router.use(dashboardRouter);
+router.use(usersRouter);
+router.use(templatesRouter);
+router.use(integrationsRouter);
+router.use(utilsRouter);
+router.use(workspacesRouter);
+router.use(leadsRouter);
+router.use(franklinLeadIngestRouter);
+router.use(stageRouter);
+router.use(managerBoardRouter);
+router.use(recruitingRouter);
+router.use(recruitingSheetSyncRouter);
+
+export default router;

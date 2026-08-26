@@ -1,0 +1,17 @@
+modules = ["nodejs-24", "python-base-3.13", "postgresql-16"]
+
+[deployment]
+router = "application"
+
+[nix]
+channel = "stable-25_05"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 180000
+
+[userenv]
+
+[userenv.development]
+FRANKLINS_DEMO_LOGIN_ENABLED = "1"
+FRANKLINS_DEMO_EMPTY_WORKSPACE = "1"

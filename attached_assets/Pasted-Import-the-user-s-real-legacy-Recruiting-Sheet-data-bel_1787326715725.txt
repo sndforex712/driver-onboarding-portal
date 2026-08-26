@@ -1,0 +1,76 @@
+Import the user's real legacy Recruiting Sheet data below into the normal Franklin development database and make it visible in the Recruiting UI. This is an implementation task, not a plan-only task.
+
+Safety and acceptance:
+- First take a read-only count/inventory. Do not modify Onboarding rows.
+- Build a checked-in, manual-only, idempotent import script for source LEGACY_SHEET_2026_08. Normalize phones to digits and use workspace + normalized phone as the primary duplicate signal, with name as a secondary check. Never create a second active case for the same driver. On rerun, update/import missing legacy profile fields and add no duplicate timeline event.
+- Treat these as real imported records, not demo seed. Preserve row number and every supplied raw field in an auditable import event. Do not invent missing values.
+- If the current schema lacks phone, truck/year, driver type, recruiter display name, source, readiness bucket, or legacy note, add only additive nullable fields (or a dedicated one-to-one recruiting profile table) and expose them on queue/case detail/create/edit UI. Do not bury all operational data only inside notes.
+- Create/reuse internal Recruiter memberships for the named recruiters (Jack, Brandon, Michael, John, Sam, Sean, Tim, Hardy, Bob, Morgan) without granting admin access or inventing public emails. Normalize Jonh/JOHN/JACK/Brandor/Rrandon to John/Jack/Brandon. Keep recruiter name visible even if no login identity exists.
+- Stage mapping: rows in CVRD/package section -> COMPLIANCE_DOCUMENTS_PENDING unless a more exact checked status is reliably represented; Drug Test section -> DRUG_TEST_SCHEDULED; first-process ASAP -> APPLICATION_SENT; first-process 1/2/3 weeks or after -> FUTURE_FOLLOW_UP with return stage APPLICATION_SENT. Derive next-action deadlines from readiness: ASAP = next business day; 1 week = +7d; 2 weeks = +14d; 3 weeks = +21d; after/unknown = +30d. Preserve the original readiness text. All imported active cases must have case owner, task owner, next action and deadline.
+- Existing 8 deterministic DEV/DEMO seed cases must remain recoverable but be excluded from default operational views after real rows exist; do not delete arbitrary records.
+- Validate counts, duplicates, representative records and browser rendering. Run build/typecheck and affected regressions. Leave API/web running normally.
+
+TSV columns: row|readiness|name|phone|truck_year_make|driver_type|legacy_note|recruiter|source|section
+2|ASAP|Bernardo Williams & Mark Dayton (FL)|(256) 490-8004|||CVRD 08/17|Jack||CVRD
+3|ASAP|David Epting (MS)|(601) 502-6817|2020 INTL||CVRD 08/17|Jack|Data Base|CVRD
+4|2 weeks|GUILLERMOD DAVID (TX)|(832) 869-9075|2021 FRHT|OTR|CVRD 08/18|Brandon|Indeed|CVRD
+5|ASAP|Jhonsly Das (FL)|(786) 571-3585||Local|CVRD 08/18|Michael|Data Base|CVRD
+6|ASAP|Cornelius Hadnot (NV)|(702) 287-0029|1998 FRHT|Regional|CVRD 08/19|John|Database|CVRD
+7|2 weeks|Cortez Nelson (OH)|(513) 200-9026|2020 INTL|Regional|qamaldi oqamz|John|Indeed|CVRD
+8|ASAP|Clifton Gregory|(248) 521-5150|2015 PTRB|OTR|ready on monday|Brandon|Data Base|CVRD
+9|2 weeks|Kurt Germain (TX)|(346) 386-1717|2024 PTRB|Regional|ready on monday|Sam|Indeed|CVRD
+10|ASAP|Tolbert Ormond (TX)|(832) 746-3702|2015 FRHT|Local|ready on monday|Sam|Data Base|CVRD
+11|ASAP|Kervens Jean (FL)|(954) 551-5331|2015 FRHT|Regional|CVRD 08/17 / 2 weeksn ga konmiy qoldi / thinking about 2 weeks|Jack|Indeed|CVRD
+12|ASAP|George Ajuruchi (LA)|(202) 460-0724|2021 KW|OTR|need get truck from shop / need 2.3k|Brandon||CVRD
+13|ASAP|Mark Dayton (AL)|(256) 490-8004|2023 MACK|Regional|he will get truck on monday|Jack|Indeed|CVRD
+14|ASAP|VAUGHN KEIRON (NJ)|(201) 492-2290|2015 FRHT|OTR|Ready august 31|Brandon|Indeed|CVRD
+16|ASAP|Eric Ardison (LA)|318 739 3851|||Eric Ardison 2105 Versailles Dr Arlington Texas 76006|Sean||PACKAGE
+17|2 weeks|MARTIN WASHINGTON (TX)|(832) 752-9900|2024 FRHT|Regional|2714 Meadow Ln La Marque, TX 77568|Jack|Indeed|PACKAGE
+18|ASAP|David Jones (TX)|(432) 215-0466|2015 FRHT|OTR|5915 Mile High Lane Midland TX 79706 / 9 pin / need to call later|Sam|Indeed|PACKAGE
+20|2 weeks|Antonio Abrom (TX)|832 815 4665|2019 FRHT|OTR|passing drug test on Fri|Jack|Indeed|DRUG_TEST
+21|2 weeks|MEECKINS ORLANDO (AR)|(501) 561-8120|2019 FRHT|Regional|passing drug test on friday|Michael|Indeed|DRUG_TEST
+22|2 weeks|Anthony Rich (KY)|270 407 7004|2001 FRHT|OTR|passing drug test on monday|Sam|Indeed|DRUG_TEST
+23|2 weeks|Steve Reynaga (CALI)|213 692 3250|2016 PTRB|OTR|passing drug test on monday / 4584 S Jasmine Ave Yuma AZ 85365|Tim|Indeed|DRUG_TEST
+24|1 week|Paul Taylor (NJ)|(551) 333-4578|2019 PTRB|Regional|still working with company / leave end of the week|Jack|Indeed|DRUG_TEST
+25|after|Mark Grimes's son & Mark Grimes (AR)|(501) 398-1296|2016 MACK|Regional|end of the month ready|John|Database|DRUG_TEST
+26|ASAP|Eduardo Enriquez (TX)|915 471 9697|2007 INTL|Regional|need to schedule drug test / na4x|Brandon|Indeed|DRUG_TEST
+27|ASAP|Michael Mayfield (TX)|(318) 436-9704|2020 INTL|Regional|need to schedule drug test / na 1 day / na 2x|Sam|Data Base|DRUG_TEST
+29|1 week|FERNANDO JOSEPH (TX)|305 250 8789|2008 FRHT|Regional|filling out the app / DT next Thurs|John|Indeed|FIRST_PROCESS
+30|ASAP|Thomas Thibodeaux (TX)|337 936 0529|2016 FRHT|OTR|filling out the app / he is driving|John|Indeed|FIRST_PROCESS
+31|after|Matthew Chatten (NJ)|(609) 551-8868|2019 FRHT|OTR|need to call at 1 pm / wednesday ready|Jack|Indeed|FIRST_PROCESS
+32|ASAP|Demond Jones (TX)|281 965 6809|2017 PTRB|Local|fill out app late on today|Sam|Indeed|FIRST_PROCESS
+33|ASAP|Marcel Wallace (TX)|(210) 556-2493|2017 PTRB|Local|filling out the application / need to call at 3pm|Sam|Indeed|FIRST_PROCESS
+34|ASAP|Witny Dalmond (FL)|(321) 512-2981|2022 INTL|Regional|filling out application / he is driving right now / need to call at 5 PM|Jack|Indeed|FIRST_PROCESS
+35|ASAP|Felicia Weary (MS)|601 882 1445|2019 KW|Local|filling out the application / DT on Thurs / call in hour / 1 DAY NA 3xx|Jack|Indeed|FIRST_PROCESS
+36|ASAP|DECAREY TOREZ (AL)|(256) 871-9926|2006 VOLV|Regional|app has been sent / inform qilmoqchidim / he is sleeping need to call later / na 2x|Brandon|Indeed|FIRST_PROCESS
+37|ASAP|Michael Daniel (NY)|(678) 932-0249|2018 PTRB|OTR|need to start hiring / 1 DAY NA / na3x|Jack|Indeed|FIRST_PROCESS
+38|1 week|Matthew Granger (CA)|305-699-7146|2020 PTRB|OTR|need to call back Thurs / na2x|Jack|Indeed|FIRST_PROCESS
+39|ASAP|Jamelle Byard (PA)|(267) 213-0999|2008 FRHT|Regional|filling out application / he is driving right now / need to call tomorrow / call back NA 2x|Jack|Data Base|FIRST_PROCESS
+40|1 week|Krystal Morris (NC)|(704) 420-1990|2021 INTL|Local|filling out app / need to call at 3 PM / 1 DAY NA / will call back|Sam|Data Base|FIRST_PROCESS
+41|1 week|Terry Tompkins (FL)|(407) 307-4743|2016 PTRB|Regional|filling out app / he is driving right now / he will call back when gets stop / 1 DAY NA 3x|Jack|Indeed|FIRST_PROCESS
+42|ASAP|Lamon Welch (NV)|(702) 485-8704|2020 FRHT|Regional|need to confirm 2 weeks behind and offer / 3 DAY NA 2x|Tim|Indeed|FIRST_PROCESS
+43|ASAP|Bruce Bell (FL) & Althea James (GA)|(305) 345-6990|2019 FRHT|OTR|thinking offer / need to call on Tue / 2 DAY NA 2x|Michael|Indeed|FIRST_PROCESS
+44|ASAP|Damon Applewhite (MI)|313-587-6850|2020 PTRB|OTR|has an issue in engine / asked me to call after a week|Brandon|Indeed|FIRST_PROCESS
+45|ASAP|Mahmood Qadri (VA)|(202) 531-6898|2005 INTL|Local|Thurs 2 weeks notice beradi na 3x|Sam|Indeed|FIRST_PROCESS
+46|2 weeks|Dordan Matthews (FL)|(754) 600-7520|2023 INTL|OTR|truck at the shop / need to call on thursday na 3x|Hardy|Referral|FIRST_PROCESS
+47|after|Danny Duke (TX)|214 641-4558|2007 FRHT|Local|Need Company Driver / Truck in TX / 3 DAY NA|John|Indeed|FIRST_PROCESS
+48|after|ALFONSO EDWARDS|850 771 8656|2009 FRHT|Local|next month ready / at dentist will call|John|Indeed|FIRST_PROCESS
+49|3 weeks|Willie Howie (GA)|(678) 927-0044|1998 FRHT|Regional|truck still at the shop / will call back when he fixes his truck / ready in 2 weeks|Michael|Database|FIRST_PROCESS
+50|1 week|Malik McLaurin (MO)|(314) 422-4750|2018 FRHT|Local|still thinking offer / need to call in Sep|Jack|Indeed|FIRST_PROCESS
+51|3 weeks|Tanya Erickson (TX)|(718) 844-0528|2018 FRHT|Local|on vacation / ETA next week / sms chat|Sam|Indeed|FIRST_PROCESS
+52|ASAP|John Harper (VA)|(202) 428-8065|2015 KW|Local|still thinking offer / need to call on Fri|Brandon||FIRST_PROCESS
+53|2 weeks|Ruben Villalonga (FL)|(863) 409-5340|2007 FRHT|Local|still buying truck / need to call on Fri|Brandon|Indeed|FIRST_PROCESS
+54|2 weeks|Anton Brown (FL)|904 729 8019|FRHT|Local|he will talk on Friday / need to start hiring from Friday|Jack|Indeed|FIRST_PROCESS
+55|2 weeks|Gustavo Guerrero (FL)|(408) 449-2549|BUYING|Local|buying truck / need to call on FRI|Jack|Indeed|FIRST_PROCESS
+56|2 weeks|OMAR JR RAMIREZ (TX)|(956) 577-7669|BUYING|OTR|buying truck in Sep / need to call on Fri|Jack|Indeed|FIRST_PROCESS
+57|1 week|Gunter Bernard (FL)|(904) 397-4811|2013 VOLV|Regional|truck is down / need to call on Fri|Bob|Tenstreet|FIRST_PROCESS
+58|after|Jaime Barragan (CA)|(951) 275-6909|2020 INTL|Regional|ETA after 15th Sep / need to call on FRIDAY|Sam|Data Base|FIRST_PROCESS
+59|2 weeks|Jarrod Noble (FL)|(904) 271-0996|2020 INTL|Regional|truck is still in shop / need to call on Fri|Morgan|Indeed|FIRST_PROCESS
+60|1 week|Anthony Lewis (ID)|208 918-5858|2014 INTL|Regional|truck at the shop / will be ready 1st week of September / need to call on Fri|John|SEAN|FIRST_PROCESS
+61|3 weeks|MONTRAILL HOWARD (FL)|(469) 974-5663|2020 KW|Regional|buying truck in next week / need to call on Mon / he's busy will call back|Sam|Indeed|FIRST_PROCESS
+62|2 weeks|Jackie Smith (CA)|(707) 727-8673|BUYING|Local|he is in the process of buying a truck / ready after 3 weeks|Sam|Indeed|FIRST_PROCESS
+63|ASAP|COAXUM KAYSAN & WRIGHT JONTRELL|(323) 270-6865|2020 FRHT|OTR|need to confirm 2 weeks behind and offer / need 1k to fix truck|Michael|Indeed|FIRST_PROCESS
+64|2 weeks|GRANT JOHNNY|(225) 259-1680|BUYING|Local|he will call in Sep / need to call monday|Brandon|Data Base|FIRST_PROCESS
+65|ASAP|SOTO FRANKLY|(443) 942-2081|2020 FRHT|OTR|filling out now / phone is slow|Brandon|Data Base|FIRST_PROCESS
+
+Important ambiguous-data rule: use exactly the strings above; never guess an email, tracking number, checkbox, or missing value from the screenshot. Record import source and legacy row on every case. Complete the import, report inserted/updated/skipped/duplicate counts, then open the live Recruiting queue and verify several named rows. Do not stop after writing the script.

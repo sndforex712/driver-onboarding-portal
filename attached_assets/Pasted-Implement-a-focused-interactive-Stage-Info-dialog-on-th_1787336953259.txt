@@ -1,0 +1,27 @@
+Implement a focused interactive Stage Info dialog on the Recruiting CASE-DETAIL Driver Status rail.
+
+User request: when any milestone/dot is clicked, an info window should open. For now show only the minimum; the user will decide later what additional information belongs there.
+
+Scope and behavior:
+1) ONLY case-detail Driver Status milestones become interactive. Do not change the compact queue rail, stage model, workflow behavior, data, sorting, Sheet sync, owners, tasks, or counts.
+2) Every one of the 16 milestone dots must be a real keyboard-accessible button, with clear aria-label such as “View New Lead stage information”.
+3) Clicking a completed, current, or future stage opens an accessible modal/dialog styled in the existing Franklin dark-green/amber design.
+4) Minimal dialog content:
+   - Stage name
+   - Position: “Step X of 16”
+   - State: Completed / Current / Upcoming
+   - “Entered this stage”: accurate date + time derived from existing Recruiting audit/stage-transition history.
+   - If the selected stage has never been reached or no trustworthy event exists, show “Not reached yet” or “No recorded timestamp” — never invent or approximate a date.
+   - A restrained placeholder area: “Additional stage details will be configured here.” Do not add speculative fields.
+5) For New Lead, use the actual case creation/audit timestamp only if that is the authoritative entry time. For other reached stages, use the first valid transition into that stage. If repeated/re-entered transitions exist, label the shown value clearly (prefer most recent entry only if existing domain semantics require it; otherwise first entry). Inspect current audit event shapes before deciding.
+6) Dialog interaction/accessibility:
+   - semantic role=dialog, aria-modal, labelled title
+   - focus moves into dialog, Tab remains contained, Escape and Close button close it, focus returns to the clicked stage button
+   - backdrop click may close if the project’s existing Dialog component supports it
+   - responsive at 390px; no overflow/clipping
+7) Do not add a backend field or migration if the existing case detail/timeline already exposes authoritative timestamps. If not exposed, make the smallest read-only API projection needed from existing audit data; no writes.
+8) Follow TDD: first add focused failing tests for button semantics, state calculation, timestamp mapping/fallback, open/close and keyboard behavior; confirm RED, then implement GREEN and refactor.
+9) Run focused tests, typechecks, full build, Recruiting/Sheet/Manager regressions.
+10) Real browser verify on /recruiting/cases/869 and one progressed case (for example /recruiting/cases/86): click New Lead/current/future milestones; confirm accurate displayed timestamp/fallback, correct state, Escape/Close/focus return, mobile layout, clean console/network, and zero data mutation.
+
+First inspect the existing case detail data and audit timeline to identify the authoritative timestamp source. Report the exact source/semantics, changed files, tests, and browser observations. Keep the UI deliberately minimal because the user will specify the rest later.

@@ -1,0 +1,21 @@
+Proceed with Increment 2C: isolated PostgreSQL integration verification plus production API contracts/routes for Recruiting. Use RED→GREEN and keep existing Onboarding routes/UI unchanged.
+
+A) Isolated PostgreSQL first
+- Prefer a temporary database or uniquely named temporary schema owned by the current dev connection; prove it is isolated before applying anything.
+- Apply the checked-in migrations only there.
+- Run real overlapping SQL transaction tests for duplicate active-case creation, stale-version same-key replay, exact-once transfer (new and existing same-workspace target), cross-workspace denial, and rollback after every SQL write position.
+- Drop only the exact temporary database/schema after tests if safe and recoverable. Never clean, migrate, or mutate shared dev/prod data. If isolation cannot be proven, do not apply anything; report that and continue API work using the compiled adapter/in-memory tests.
+
+B) API contract + routes
+- Define OpenAPI-first contracts and generated Zod/React Query types following existing project conventions.
+- Endpoints: create case; list/search/filter/paginate cases; case detail with event timeline; transition; manager approve/return; Future Follow-up return; exact-once transfer; dashboard/queue/SLA summary needed by future UI.
+- Authenticated workspace from existing auth only; never trust workspaceId/owner IDs from body without validation.
+- Idempotency-Key required for create/transition/follow-up/transfer writes; optimistic expectedVersion required where applicable.
+- Strict request/response schemas, structured conflict/validation/forbidden/not-found errors, pagination limits, normalized search.
+- Do not expose stack traces, SQL details, or cross-workspace existence.
+- Wire routes to RecruitingRepository with real Drizzle adapter; no mock runtime.
+- Add route/service security tests: unauthenticated, cross-workspace, invalid owner/manager, missing/reused key, stale version, replay, duplicate active case, filters/pagination, timeline order, and transfer replay.
+- No frontend, scheduler, integrations, or Onboarding UI/design changes yet.
+- Do not publish/deploy or apply migration to shared DB.
+
+After GREEN: focused PostgreSQL/API tests, 2A/2B/domain/Manager regressions, typechecks, build, diff review, external code review, API restart and fresh logs. Stop with exact files, test counts, isolated-DB evidence, and remaining risk.

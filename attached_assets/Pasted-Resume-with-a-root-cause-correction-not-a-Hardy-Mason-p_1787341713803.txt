@@ -1,0 +1,11 @@
+Resume with a root-cause correction, not a Hardy/Mason precedence choice. User established that every qualifying MAIN JIDO source row 2-71 is a distinct in-process driver entry. The five collapsed mappings have different driver names, so the current phone-based duplicate merge is over-aggressive.
+
+Required:
+1. Read-only audit all five collapsed mappings: source row, name, phone, existing driver/lead/case IDs, why duplicate matching merged them. Confirm every pair has distinct normalized names/source-row keys.
+2. TDD: authoritative Google Sheet source identity is workbook+tab+physicalRow. Different qualifying source rows with different normalized driver names must not share a Recruiting case merely because phone/email is reused. Preserve duplicate protection for the same source row, same normalized person, exact replay, and intentional multi-driver name in one row.
+3. Add an additive, transactional split/repair preview for exactly these five mappings. Create/restore one canonical case per qualifying source row so the operational scope becomes 67 unique cases. Copy only that row's snapshot/stage data; preserve history safely; no Sheet write. Do not delete the old case. Use stable idempotency/audit keys and rollback on any error.
+4. If audit proves any pair is actually the same normalized person, stop and report. Otherwise apply once, rerun as no-op, then rerun row ownership preview. It must be Hardy 21 unique cases, Mason 23, Wayne 23, no conflicts/missing/unmatched, Task Owner changes 0.
+5. Then complete the previously approved transactional Case Owner assignment and three-section responsive board exactly as specified. Task Owner/manager handoff unchanged. Future sync reconciles by stable source-row identity without re-merging different names.
+6. Run focused RED/GREEN tests, sync/recruiting/ordering/manager regressions, typecheck/build, API/web restart, desktop+390px browser checks, clean console/network. Report exact repaired mapping details and final per-worker counts.
+
+Proceed autonomously only after the audit gates prove all five are distinct people/entries.

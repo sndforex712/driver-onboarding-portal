@@ -1,0 +1,70 @@
+DEV/DEMO data-entry task explicitly authorized by the user. Import exactly the 55 screenshot rows below into Franklin workspace_id=1.
+
+Strict scope:
+1. Create only driver records required for /drivers, using only the supplied display Name and Phone. Preserve the name spelling/case and parenthetical state text exactly as supplied. Normalize phone internally only as required by the existing schema, but display the supplied phone correctly.
+2. Do not populate or infer truck/equipment, driver type, recruiter, source, status notes, application/checklist progress, documents, tracking, email, address, state fields, owner, operational step, due dates, or any other business information. If the schema requires technical defaults/IDs/timestamps, use only the minimum safe system defaults and ensure the UI shows other business fields as blank/unknown/unassigned—not invented data.
+3. Leave every driver unassigned; do not assign Hardy, Mason, Wayne, or any recruiter yet.
+4. DEV workspace_id=1 only. No Google Sheet/API imports, no external systems, no production, no publish/deploy, no Hello World/franklins.ai.
+5. Before mutation verify the operational driver table is still empty. Validate the input has exactly 55 rows, 55 non-empty names, and 55 valid 10-digit US phone numbers after normalization. Check duplicate normalized phones/names in the input.
+6. Insert in one transaction with a stable local idempotency/source marker if supported. If any validation or uniqueness issue exists, rollback all and report only the affected row number/name/phone; do not partially import.
+7. After commit verify exactly 55 driver rows, exact name/normalized-phone match for all 55, zero duplicates, and no owner/recruiter assignments. Verify Admin /drivers shows 55 rows (or total=55), Hardy can see the unassigned operational queue according to current manager permissions, Mason/Wayne do not receive ownership of these unassigned drivers, login/logout still works, and unauthenticated access remains denied.
+8. Do not re-enable fixture/backfill seeding. Preserve FRANKLINS_DEMO_EMPTY_WORKSPACE behavior so restart does not create extra records.
+9. Restart only existing DEV workflows if needed and confirm the count remains 55 after restart.
+10. No backup and no code changes unless the empty-state UI itself requires no adjustment. Finish with insert/verification counts and DEV preview link, without printing unrelated PII.
+
+INPUT (Name|Phone):
+Rory Rogers|404 563 9729
+Tolbert Ormond (TX)|(832) 746-3702
+Clifton Gregory|(248) 521-5150
+Kurt Germain (TX)|(346) 386-1717
+Antonio Ahrom (TX)|832 815 4665
+Eric Ardisson (LA)|318 739 3451
+Mark Dayton (AL)|(256) 490-8004
+VAUGHN KEIRON (NJ)|(201) 492-2290
+George Ajiruchi (LA)|(202) 460-0724
+Sedrik Alexander (AL)|(706) 577-4517
+CASTILLO MENDEZ MARIO|(510) 941-9526
+MEECKINS ORLANDO (AR)|(501) 561-8120
+Reggie Rankins (FL)|(779) 210-9536
+David Jones (TX)|(432) 215-0466
+Andrews Dustin (FL)|(850) 974-2643
+Gilberto Jimenez (PA)|(347) 851-9770
+Jackie Smith (CA)|(707) 727-8673
+Steve Reynaga (CALI)|213 692 3250
+Jerrod Green (FL)|(239) 810-6541
+Demand Jones (TX)|281 965 6809
+FERNANDO JOSEPH (TX)|305 250 8789
+Mark Grimes's son & Mark Grimes(AR)|(501) 398-1296
+Anthony Rich (KY)|270 407 7004
+Jaime Barragan (CA)|(951) 275-6909
+Michael Mayfield (TX)|(318) 436-9704
+Karl Glasstetter (MO)|(573) 887-1787
+Alain Dorellien (FL)|646 785 2685
+Michael fluellen (FL)|386 406 5460
+Oniel Menzie (FL)|(786) 278-1405
+Mustafa Akbar (GA)|678 548 5879
+Marcel Wallace (TX)|(210) 556-2493
+Delmon Young (FL)|786 201 4653
+Tony Hill (TX)|773 220 4257
+Krystal Morris (NC)|(704) 420-1990
+John Harper (VA)|(202) 428-8065
+Ruben Villalonga (FL)|(863) 409-5340
+MONTRAIL HOWARD (FL)|(469) 974-5663
+OMAR JR RAMIREZ (TX)|(956) 577-7669
+Jamelle Byard (PA)|(267) 213-0999
+DAVIS QWANDAIRUS|(501) 804-2210
+Roger Bennett (NV)|601 419 5284
+Anthony Lewis (ID)|208 918-5858
+Tanya Erickson (TX)|(718) 844-0528
+Willie Howie (GA)|(678) 927-0044
+Anton Brown (FL)|904 729 8019
+Ronald Sims (FL)|813 528 0620
+Dordan Matthews (FL)|(754) 600-7520
+Gunter Bernard (FL)|(904) 397-4811
+Travis Jackson (FL)|321-948-6081
+GRANT JOHNNY|(225) 259-1680
+ALFONSO EDWARDS|850 771 6856
+Malik McLaurin (MO)|(314) 422-4750
+Jarrod Noble (FL)|(904) 271-0996
+COAXUM KAYSAN & WRIGHT JONTRELL|(323) 270-6965
+Thomas Frazier|714 909 6114

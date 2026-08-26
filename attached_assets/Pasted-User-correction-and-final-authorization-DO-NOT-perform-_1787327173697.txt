@@ -1,0 +1,38 @@
+User correction and final authorization: DO NOT perform the one-time screenshot/TSV import. Replace that plan with a production-quality ONE-WAY, READ-ONLY Google Sheets pull integration. The user explicitly confirmed that the sheet link and its names, phone numbers, truck and recruiting data may be transmitted into this Replit project's normal development database. The Google Sheet itself must never be changed.
+
+Source workbook (confirmed public read-only export): https://docs.google.com/spreadsheets/d/1x0P28BzXkX1tAMCxGEc7p1_DFHDO8cAuIqTs3TyMfTc/edit?usp=sharing
+
+Hard safety boundary:
+- Use HTTP GET/export only. Never call a Google write API, never edit cells/formulas/colors/tabs/sharing, never request edit permission, and never store Google account cookies or credentials.
+- Do not modify existing Onboarding rows or behavior.
+- No sheet-row deletion may delete/close a database case automatically. Mark source row missing/stale and surface it for review.
+- Keep prior read-only inventory evidence. Reuse any safe additive profile-schema work already prepared, but discard the embedded static TSV dataset as a data source.
+
+Implement completely:
+1. A checked-in Google Sheet pull connector that downloads the workbook/export and parses these tabs:
+   - MAIN JIDO FREIGHT LLC -> active Recruiting records.
+   - REFERAL O|O -> referral Recruiting records with source Referral.
+   - Eski qizil -> Closed Lost/historical red records; preserve reason/note.
+   - old driver -> historical driver records, not active queue items.
+   - fleet owner -> excluded from Recruiting sync for now.
+   - Sheet5 -> ignored while empty.
+2. Additive sync metadata/profile tables and migration as needed. Persist workbook id, tab name, row number, normalized phone, raw row fingerprint, last seen timestamp, last synced timestamp, source status, raw auditable payload, and the mapped case/profile id. Never depend on row number alone: workspace + normalized phone is the primary active-case duplicate key; use stable raw fingerprint/name fallback when phone is absent.
+3. Idempotent upsert semantics:
+   - new valid person row -> create case/profile;
+   - changed source row -> update only sheet-owned profile fields and add one audit event;
+   - unchanged row -> no-op;
+   - duplicate phone -> never create another active case; reconcile/link and report conflict;
+   - missing source row -> set missing_since/status only, never delete or auto-close;
+   - retry or concurrent sync -> exactly-once effects.
+   Do not overwrite a workflow stage/action that a user changed in the app unless the corresponding sheet row fingerprint changed and the mapped sheet status is actually different.
+4. Map and expose: name, phone, truck year/make, driver type, legacy note/status, recruiter display name, source, readiness bucket, checklist booleans, tracking number, email, tab and row. Create/reuse internal recruiter identities only with recruiter role; no admin grants and no fabricated public email.
+5. Stage mapping must be deterministic and tested: main CVRD/package/checklist rows to the closest legal compliance/contract stage; Drug Test section to DRUG_TEST_SCHEDULED/PASSED from checkboxes; first-process/application rows to APPLICATION_SENT or FUTURE_FOLLOW_UP based on readiness; Eski qizil and old-driver history excluded from active queue or mapped Closed Lost. Preserve ambiguous source text and never invent missing values.
+6. Schedule:
+   - run once on safe API startup after migrations;
+   - then every 15 minutes while the normal API workflow is running, with a single-flight/advisory lock so two API instances cannot overlap;
+   - provide a standalone sync command suitable for a future Replit Scheduled Deployment/cron, but do not publish or incur paid deployment costs;
+   - configurable via RECRUITING_SHEET_SYNC_ENABLED and interval (default 15 minutes), with this public workbook id configured without secrets.
+7. Manager-only sync UI/API: last success, last attempt, duration, rows read/created/updated/unchanged/conflicted/missing/errors, next scheduled run, source health, and a Sync Now action. Sync Now must use the same lock/idempotency behavior. Add clear error handling/backoff; a sheet/network failure must not break the API or erase data.
+8. Existing deterministic DEV/DEMO cases remain recoverable but are excluded from default operational views once real synced rows exist. Do not delete unrelated data.
+9. Apply only additive migrations to the normal development DB, run the first real sync, then verify representative names/phones from each included tab in the UI and database. Compare workbook/source counts against parsed/imported/skipped/conflict counts. Verify the Google Sheet is unchanged by comparing read-only workbook metadata/content fingerprint before and after.
+10. Run typecheck/build, Recruiting/API/PostgreSQL tests, Onboarding/Manager Board regressions, connector parser/upsert/concurrency/failure tests, and real browser QA for Queue, Case Detail and Sync Status. Leave normal API/web workflows running. Report exact counts, schedule status, first/next sync time, tests, conflicts, and any rows skipped for missing identity. Do not stop after writing code; finish the first sync and verification.

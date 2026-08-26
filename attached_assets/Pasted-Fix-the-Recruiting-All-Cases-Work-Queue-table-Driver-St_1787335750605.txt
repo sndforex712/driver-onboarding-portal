@@ -1,0 +1,17 @@
+Fix the Recruiting All Cases / Work Queue table “Driver Status” cell FIRST. The attached/user-observed problem is the repeated oversized gray horizontal scrollbar under every 16-dot progress rail. It looks broken and wastes row height.
+
+Scope: ONLY the compact Driver Status renderer used in queue/list table rows. Do not change case-detail rail, stage semantics, sorting, data, Sheet sync, workflow, owners, or counts.
+
+Required result:
+1) Remove ALL per-row horizontal scrolling and any native/styled scrollbar from the compact table status rail.
+2) Keep the canonical 16-stage progress semantics, but make it fluid and fully contained in the cell: 16 evenly distributed milestone dots on one thin connector, completed green, current amber with ring, future muted. It must fit available width without clipping.
+3) Below/alongside it, retain a concise current-stage label and “X/16”. No repeated long labels; current stage only.
+4) Desktop/tablet table: compact fixed-height component, roughly 48–56px total, no excess vertical padding. Mobile/narrow fallback: simple current stage + X/16 + slim progress bar; no dots if they become unreadable.
+5) No horizontal overflow at row, table-cell, table, or page level. Do not solve by hiding meaningful status text.
+6) Preserve accessible text/role: “Driver status: Manager Review, step 6 of 16”; do not rely only on color.
+7) Preserve the full case-detail Driver Status component exactly as-is.
+8) Add/adjust focused tests for compact rail: 16 milestones, first/middle/last/unknown stages, no overflow-scroll classes, responsive fallback semantics.
+9) Run typecheck, build, stage/recruiting regressions.
+10) Real browser verify /recruiting?view=all&lifecycle=active at 1440, 1024, 768, and 390. Confirm zero per-row scrollbars, readable current label, no page overflow, clean console/network. Use real data but no mutations.
+
+Follow the existing dark green/amber Franklin design system. Make the patch focused and production-quality. Report exact changed files and verification.

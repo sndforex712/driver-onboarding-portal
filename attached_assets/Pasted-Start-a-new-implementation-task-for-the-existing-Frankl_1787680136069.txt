@@ -1,0 +1,18 @@
+Start a new implementation task for the existing Franklin All Drivers page (/onboarding/drivers). Read AGENTS.md and inspect the current monorepo, DB schema, APIs, Sheet sync, route, tests, and existing role guards before editing. Implement this as one code release, but do NOT publish, deploy, apply production migrations, mutate live/production driver data, call live ingest, or intentionally write to Google Sheets.
+
+Scope (All Drivers only; employee login/RBAC UI is a later release):
+1. Add structured CRM-owned fields for operationalOwner, nextAction, dueAt, blocker/status (or adapt existing equivalent fields instead of duplicating them), with additive migration if needed.
+2. Add useful All Drivers filters/views: Due today, Overdue, Waiting/Blocked, No next action, plus owner/step/source filters and search. Queue counts must come from the same filtered dataset as visible rows.
+3. Preserve recruiter attribution separately from operational ownership.
+4. Enforce/centralize current-step derivation and expose non-sequential/inconsistent imported completion data as a Needs Review/data-quality state. Do not silently rewrite historical/live data.
+5. Keep Mason/Wayne for Steps 1-6 and Hardy for Steps 7-12/Ready according to canonical persisted completion and routing logic. Do not make a display-only move.
+6. Remove full free-text Sheet notes from the summary table so street addresses/PIN-like text are not exposed there; keep appropriately authorized detail access and show a safe short status summary.
+7. Define Sheet-vs-CRM field ownership so future Sheet refreshes cannot overwrite CRM-owned owner/task/due/blocker fields. Add regression coverage.
+8. Detect multi-person/import anomalies and surface Needs Review; do not auto-split or mutate source records.
+9. Normalize source/recruiter values for filtering/presentation without destructive production cleanup; retain raw provenance.
+10. Add/update API, authorization, queue boundary, refresh persistence, filter/count, sync-protection, sensitive-summary, invalid-ready, and tenant/workspace isolation tests.
+11. Run targeted tests, full relevant non-DB suites, typechecks, and production builds. Review the diff for P0/P1/P2 security, data loss, authorization, tenant isolation, and sync regressions; fix findings. Then run the app preview and verify /onboarding/drivers read-only.
+
+Use one canonical step definition. Known steps are Application, Clearing House, Drug Test, Contract, Med Card, Title, Annual Inspection, Shipment - Need to Send, Shipment Sent, 2290, Plate Number, Telegram / Group, then Ready. Follow the existing repo's actual step model if it differs, and report the exact mapping.
+
+Do not ask to publish. At the end report changed files/migrations, exact test/build counts, preview observations, and any unresolved blockers. Begin now.
