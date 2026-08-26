@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Driver Portal"
+description = "Phase 1 read-only prototype of the driver-facing onboarding portal. Mobile-first, local mock data only — no Twenty Cloud access, no backend, nothing deployed."
+version = "0.1.0"
+id = "artifacts/driver-portal"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/driver-portal" ]
+localPort = 23220
+
+[services.development]
+run = "pnpm --filter @workspace/driver-portal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/driver-portal", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/driver-portal/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23220"
+BASE_PATH = "/driver-portal"
