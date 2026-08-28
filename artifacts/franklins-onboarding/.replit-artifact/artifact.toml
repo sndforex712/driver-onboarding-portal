@@ -14,15 +14,6 @@ localPort = 23219
 [services.development]
 run = "pnpm --filter @workspace/franklins-onboarding run dev"
 
-[services.production]
-build = [ "pnpm", "--filter", "@workspace/franklins-onboarding", "run", "build" ]
-serve = "static"
-publicDir = "artifacts/franklins-onboarding/dist/public"
-
-[[services.production.rewrites]]
-from = "/*"
-to = "/index.html"
-
 [services.env]
 PORT = "23219"
 BASE_PATH = "/"
