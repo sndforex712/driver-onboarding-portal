@@ -36,6 +36,20 @@
       "when": 1787686248012,
       "tag": "0004_new_scrambler",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787930770852,
+      "tag": "0005_flimsy_flatman",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787930906518,
+      "tag": "0006_complete_jack_power",
+      "breakpoints": true
     }
   ]
 }

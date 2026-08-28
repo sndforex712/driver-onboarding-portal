@@ -176,7 +176,7 @@ export const CreateDriverResponse = zod.object({
 /**
  * @summary List workspace-scoped operational driver queue
  */
-export const listDriverOperationalQueueQueryStepMax = 11;
+export const listDriverOperationalQueueQueryStepMax = 12;
 
 
 
@@ -192,7 +192,7 @@ export const ListDriverOperationalQueueQueryParams = zod.object({
 
 export const ListDriverOperationalQueueResponse = zod.object({
   "items": zod.array(zod.object({
-  "id": zod.number(),
+  "id": zod.string(),
   "fullName": zod.string(),
   "driverType": zod.enum(['owner_operator', 'company_driver']),
   "status": zod.string(),
@@ -241,6 +241,280 @@ export const ListDriverOperationalQueueResponse = zod.object({
 })),
   "sources": zod.array(zod.string())
 })
+})
+
+
+/**
+ * @summary Persist a queue owner or status in Twenty Cloud
+ */
+export const UpdateTwentyDriverCandidateParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateTwentyDriverCandidateBody = zod.object({
+  "recruiter": zod.enum(['HARDY', 'RECRUITER_A', 'RECRUITER_B']).optional(),
+  "status": zod.enum(['ACTIVE', 'HIRED_DISPATCH_READY', 'NOT_QUALIFIED', 'WITHDRAWN', 'NO_RESPONSE', 'REJECTED']).optional()
+})
+
+export const updateTwentyDriverCandidateResponseCurrentStepNumberMax = 12;
+
+
+
+export const UpdateTwentyDriverCandidateResponse = zod.object({
+  "id": zod.string(),
+  "fullName": zod.string(),
+  "phone": zod.string().nullable(),
+  "currentStep": zod.string(),
+  "currentStepNumber": zod.number().min(1).max(updateTwentyDriverCandidateResponseCurrentStepNumberMax),
+  "currentStepLabel": zod.string(),
+  "completedStepNumbers": zod.array(zod.number()),
+  "completionPercent": zod.number(),
+  "status": zod.enum(['ACTIVE', 'HIRED_DISPATCH_READY', 'NOT_QUALIFIED', 'WITHDRAWN', 'NO_RESPONSE', 'REJECTED']),
+  "recruiter": zod.enum(['HARDY', 'RECRUITER_A', 'RECRUITER_B']),
+  "recruiterLabel": zod.string(),
+  "source": zod.string(),
+  "nextFollowUp": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Get the canonical 12-step document workflow for one Twenty candidate
+ */
+export const GetTwentyDocumentWorkflowParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const getTwentyDocumentWorkflowResponseCurrentStepNumberMax = 12;
+
+
+
+export const GetTwentyDocumentWorkflowResponse = zod.object({
+  "candidateId": zod.string(),
+  "candidateName": zod.string(),
+  "canManageDocuments": zod.boolean(),
+  "currentStepKey": zod.string(),
+  "currentStepNumber": zod.number().min(1).max(getTwentyDocumentWorkflowResponseCurrentStepNumberMax),
+  "currentStepLabel": zod.string(),
+  "steps": zod.array(zod.object({
+  "number": zod.number(),
+  "key": zod.string(),
+  "label": zod.string(),
+  "state": zod.enum(['complete', 'current', 'upcoming']),
+  "allowsManualCompletion": zod.boolean(),
+  "requirements": zod.array(zod.object({
+  "id": zod.number(),
+  "stepKey": zod.string(),
+  "requirementKey": zod.string(),
+  "label": zod.string(),
+  "isMandatory": zod.boolean(),
+  "allowsManualCompletion": zod.boolean(),
+  "sortOrder": zod.number()
+})),
+  "documents": zod.array(zod.object({
+  "id": zod.number(),
+  "candidateId": zod.string(),
+  "stepKey": zod.string(),
+  "requirementKey": zod.string(),
+  "docName": zod.string(),
+  "status": zod.enum(['under_review', 'verified', 'rejected']),
+  "mimeType": zod.string(),
+  "sizeBytes": zod.number(),
+  "notes": zod.string().nullish(),
+  "rejectionReason": zod.string().nullish(),
+  "uploadedAt": zod.string().nullish(),
+  "reviewedAt": zod.coerce.date().nullish(),
+  "verifiedAt": zod.string().nullish(),
+  "downloadUrl": zod.string().optional(),
+  "createdAt": zod.coerce.date()
+}))
+}))
+})
+
+
+/**
+ * @summary Upload a private document for the candidate's current Twenty step
+ */
+export const UploadTwentyDriverDocumentParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const uploadTwentyDriverDocumentBodyNotesMax = 1000;
+
+
+
+export const UploadTwentyDriverDocumentBody = zod.object({
+  "file": zod.string().describe('Multipart file part; validated as PDF\/JPEG\/PNG\/WebP by the API server.'),
+  "stepKey": zod.string(),
+  "requirementKey": zod.string(),
+  "notes": zod.string().max(uploadTwentyDriverDocumentBodyNotesMax).optional()
+})
+
+export const UploadTwentyDriverDocumentResponse = zod.object({
+  "id": zod.number(),
+  "candidateId": zod.string(),
+  "stepKey": zod.string(),
+  "requirementKey": zod.string(),
+  "docName": zod.string(),
+  "status": zod.enum(['under_review', 'verified', 'rejected']),
+  "mimeType": zod.string(),
+  "sizeBytes": zod.number(),
+  "notes": zod.string().nullish(),
+  "rejectionReason": zod.string().nullish(),
+  "uploadedAt": zod.string().nullish(),
+  "reviewedAt": zod.coerce.date().nullish(),
+  "verifiedAt": zod.string().nullish(),
+  "downloadUrl": zod.string().optional(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Download a private candidate document after workspace authorization
+ */
+
+
+
+export const DownloadTwentyDriverDocumentParams = zod.object({
+  "id": zod.coerce.string(),
+  "docId": zod.coerce.number().min(1)
+})
+
+export const DownloadTwentyDriverDocumentResponse = zod.unknown()
+
+
+/**
+ * @summary Verify or reject an uploaded candidate document
+ */
+
+
+
+export const ReviewTwentyDriverDocumentParams = zod.object({
+  "id": zod.coerce.string(),
+  "docId": zod.coerce.number().min(1)
+})
+
+export const reviewTwentyDriverDocumentHeaderIdempotencyKeyMin = 8;
+export const reviewTwentyDriverDocumentHeaderIdempotencyKeyMax = 200;
+
+
+
+export const ReviewTwentyDriverDocumentHeader = zod.object({
+  "Idempotency-Key": zod.string().min(reviewTwentyDriverDocumentHeaderIdempotencyKeyMin).max(reviewTwentyDriverDocumentHeaderIdempotencyKeyMax).optional()
+})
+
+export const reviewTwentyDriverDocumentBodyRejectionReasonMax = 1000;
+
+
+
+export const ReviewTwentyDriverDocumentBody = zod.object({
+  "status": zod.enum(['verified', 'rejected']),
+  "rejectionReason": zod.string().min(1).max(reviewTwentyDriverDocumentBodyRejectionReasonMax).optional()
+})
+
+export const ReviewTwentyDriverDocumentResponse = zod.object({
+  "document": zod.object({
+  "id": zod.number(),
+  "candidateId": zod.string(),
+  "stepKey": zod.string(),
+  "requirementKey": zod.string(),
+  "docName": zod.string(),
+  "status": zod.enum(['under_review', 'verified', 'rejected']),
+  "mimeType": zod.string(),
+  "sizeBytes": zod.number(),
+  "notes": zod.string().nullish(),
+  "rejectionReason": zod.string().nullish(),
+  "uploadedAt": zod.string().nullish(),
+  "reviewedAt": zod.coerce.date().nullish(),
+  "verifiedAt": zod.string().nullish(),
+  "downloadUrl": zod.string().optional(),
+  "createdAt": zod.coerce.date()
+}),
+  "advancement": zod.object({
+  "advanced": zod.boolean(),
+  "finalCompleted": zod.boolean(),
+  "currentStepKey": zod.string(),
+  "nextStepKey": zod.string().nullish(),
+  "message": zod.string()
+})
+})
+
+
+/**
+ * @summary Manually complete a no-document Twenty step
+ */
+export const CompleteTwentyDriverStepParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const completeTwentyDriverStepHeaderIdempotencyKeyMin = 8;
+export const completeTwentyDriverStepHeaderIdempotencyKeyMax = 200;
+
+
+
+export const CompleteTwentyDriverStepHeader = zod.object({
+  "Idempotency-Key": zod.string().min(completeTwentyDriverStepHeaderIdempotencyKeyMin).max(completeTwentyDriverStepHeaderIdempotencyKeyMax).optional()
+})
+
+export const CompleteTwentyDriverStepBody = zod.object({
+  "expectedStepKey": zod.string()
+})
+
+export const CompleteTwentyDriverStepResponse = zod.object({
+  "advanced": zod.boolean(),
+  "finalCompleted": zod.boolean(),
+  "currentStepKey": zod.string(),
+  "nextStepKey": zod.string().nullish(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary List workspace document requirement configuration
+ */
+export const ListTwentyDocumentRequirementsResponseItem = zod.object({
+  "id": zod.number(),
+  "stepKey": zod.string(),
+  "requirementKey": zod.string(),
+  "label": zod.string(),
+  "isMandatory": zod.boolean(),
+  "allowsManualCompletion": zod.boolean(),
+  "sortOrder": zod.number()
+})
+export const ListTwentyDocumentRequirementsResponse = zod.array(ListTwentyDocumentRequirementsResponseItem)
+
+
+/**
+ * @summary Update one workspace document requirement
+ */
+
+
+
+export const UpdateTwentyDocumentRequirementParams = zod.object({
+  "requirementId": zod.coerce.number().min(1)
+})
+
+export const updateTwentyDocumentRequirementBodyLabelMax = 200;
+
+export const updateTwentyDocumentRequirementBodySortOrderMin = 0;
+export const updateTwentyDocumentRequirementBodySortOrderMax = 100;
+
+
+
+export const UpdateTwentyDocumentRequirementBody = zod.object({
+  "label": zod.string().min(1).max(updateTwentyDocumentRequirementBodyLabelMax).optional(),
+  "isMandatory": zod.boolean().optional(),
+  "allowsManualCompletion": zod.boolean().optional(),
+  "sortOrder": zod.number().min(updateTwentyDocumentRequirementBodySortOrderMin).max(updateTwentyDocumentRequirementBodySortOrderMax).optional()
+})
+
+export const UpdateTwentyDocumentRequirementResponse = zod.object({
+  "id": zod.number(),
+  "stepKey": zod.string(),
+  "requirementKey": zod.string(),
+  "label": zod.string(),
+  "isMandatory": zod.boolean(),
+  "allowsManualCompletion": zod.boolean(),
+  "sortOrder": zod.number()
 })
 
 

@@ -24,3 +24,7 @@
 - [All Drivers operational routing](all-drivers-operational-routing.md) — 13-milestone queue derives ownership from persisted checklist state; supporting gates are not data-quality anomalies.
 - [Development migration idempotency](development-migration-idempotency.md) — reconcile dev schema/journal drift with safe additive migrations, never journal bypasses.
 - [Empty DEV workspace resets](empty-dev-workspace-resets.md) — destructive Franklin DEV resets require explicit bootstrap suppression or restart recreates Manager Board fixtures.
+- [Driver Portal migrations](driver-portal-migrations.md) — portal-owned Drizzle migrations use a separate schema and migration journal from the shared onboarding database.
+- [Twenty Driver Candidate metadata](twenty-driver-candidate.md) — Twenty Cloud owns a custom Driver Candidate object with canonical stage options and workspace Kanban views.
+- [Production demo access](production-demo-access.md) — public fixed-role demo login is an explicit accepted project choice; keep it opt-in and same-origin.
+- [App Storage in the pnpm monorepo](app-storage-pnpm.md) — install SDK/runtime deps in the consuming workspace and await lazy client initialization.

@@ -22,6 +22,7 @@ import { normalizePhone } from "./duplicate-detection";
 import { logger } from "./logger";
 import { getChecklistTemplateForDriver } from "./checklist-gates";
 import { OPERATIONAL_CHECKLIST_TEMPLATE } from "./checklist-gates";
+import { seedTwentyDocumentRequirements } from "./twenty-document-requirements";
 
 export async function seedDatabase() {
   // ── Ensure workspaces exist first (workspace_id is required for all inserts) ──
@@ -53,6 +54,7 @@ export async function seedDatabase() {
     throw new Error("Failed to find Franklin workspace after upsert");
   }
   const wsId = franklinWs.id;
+  await seedTwentyDocumentRequirements(wsId);
 
   // ── Skip guard ────────────────────────────────────────────────────────────
   const existing = await db.select().from(appUsersTable);
@@ -724,6 +726,7 @@ export async function ensureWorkspaceData() {
   }
 
   const franklinId = franklin.id;
+  await seedTwentyDocumentRequirements(franklinId);
 
   // A deliberately empty DEV workspace is used for destructive reset
   // verification. Keep the workspace and auth infrastructure intact, but do

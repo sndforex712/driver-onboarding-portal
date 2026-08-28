@@ -27,6 +27,7 @@ import type {
   ChecklistItemUpdate,
   Comment,
   CommentInput,
+  CompleteTwentyDriverStepBody,
   ComplianceException,
   ConflictErrorResponse,
   CreateRecruitingCaseInput,
@@ -72,7 +73,17 @@ import type {
   RecruitingTransferInput,
   RecruitingTransferResult,
   RecruitingTransitionInput,
+  ReviewTwentyDriverDocument200,
   RoleSwitchInput,
+  TwentyAdvancementResult,
+  TwentyDocumentRequirement,
+  TwentyDocumentRequirementUpdate,
+  TwentyDocumentReviewInput,
+  TwentyDocumentWorkflow,
+  TwentyDriverCandidate,
+  TwentyDriverCandidateUpdate,
+  TwentyDriverDocument,
+  UploadTwentyDriverDocumentBody,
   ValidationErrorResponse,
   WorkQueueItem,
   WorkflowTemplate
@@ -491,6 +502,611 @@ export function useListDriverOperationalQueue<TData = Awaited<ReturnType<typeof 
 
 
 
+
+export const getUpdateTwentyDriverCandidateUrl = (id: string,) => {
+
+
+
+
+  return `/api/drivers/operational-queue/${id}`
+}
+
+/**
+ * @summary Persist a queue owner or status in Twenty Cloud
+ */
+export const updateTwentyDriverCandidate = async (id: string,
+    twentyDriverCandidateUpdate: TwentyDriverCandidateUpdate, options?: Parameters<typeof customFetch>[1]): Promise<TwentyDriverCandidate> => {
+
+  return customFetch<TwentyDriverCandidate>(getUpdateTwentyDriverCandidateUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(twentyDriverCandidateUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateTwentyDriverCandidateMutationOptions = <TError = ErrorType<ErrorResponse | ForbiddenErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTwentyDriverCandidate>>, TError,{id: string;data: BodyType<TwentyDriverCandidateUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTwentyDriverCandidate>>, TError,{id: string;data: BodyType<TwentyDriverCandidateUpdate>}, TContext> => {
+
+const mutationKey = ['updateTwentyDriverCandidate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTwentyDriverCandidate>>, {id: string;data: BodyType<TwentyDriverCandidateUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateTwentyDriverCandidate(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTwentyDriverCandidateMutationResult = NonNullable<Awaited<ReturnType<typeof updateTwentyDriverCandidate>>>
+    export type UpdateTwentyDriverCandidateMutationBody = BodyType<TwentyDriverCandidateUpdate>
+    export type UpdateTwentyDriverCandidateMutationError = ErrorType<ErrorResponse | ForbiddenErrorResponse | void>
+
+    /**
+ * @summary Persist a queue owner or status in Twenty Cloud
+ */
+export const useUpdateTwentyDriverCandidate = <TError = ErrorType<ErrorResponse | ForbiddenErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTwentyDriverCandidate>>, TError,{id: string;data: BodyType<TwentyDriverCandidateUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateTwentyDriverCandidate>>,
+        TError,
+        {id: string;data: BodyType<TwentyDriverCandidateUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateTwentyDriverCandidateMutationOptions(options));
+    }
+
+export const getGetTwentyDocumentWorkflowUrl = (id: string,) => {
+
+
+
+
+  return `/api/drivers/operational-queue/${id}/document-workflow`
+}
+
+/**
+ * @summary Get the canonical 12-step document workflow for one Twenty candidate
+ */
+export const getTwentyDocumentWorkflow = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<TwentyDocumentWorkflow> => {
+
+  return customFetch<TwentyDocumentWorkflow>(getGetTwentyDocumentWorkflowUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTwentyDocumentWorkflowQueryKey = (id: string,) => {
+    return [
+    `/api/drivers/operational-queue/${id}/document-workflow`
+    ] as const;
+    }
+
+
+export const getGetTwentyDocumentWorkflowQueryOptions = <TData = Awaited<ReturnType<typeof getTwentyDocumentWorkflow>>, TError = ErrorType<ForbiddenErrorResponse | ErrorResponse>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTwentyDocumentWorkflow>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTwentyDocumentWorkflowQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTwentyDocumentWorkflow>>> = ({ signal }) => getTwentyDocumentWorkflow(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTwentyDocumentWorkflow>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTwentyDocumentWorkflowQueryResult = NonNullable<Awaited<ReturnType<typeof getTwentyDocumentWorkflow>>>
+export type GetTwentyDocumentWorkflowQueryError = ErrorType<ForbiddenErrorResponse | ErrorResponse>
+
+
+/**
+ * @summary Get the canonical 12-step document workflow for one Twenty candidate
+ */
+
+export function useGetTwentyDocumentWorkflow<TData = Awaited<ReturnType<typeof getTwentyDocumentWorkflow>>, TError = ErrorType<ForbiddenErrorResponse | ErrorResponse>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTwentyDocumentWorkflow>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTwentyDocumentWorkflowQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUploadTwentyDriverDocumentUrl = (id: string,) => {
+
+
+
+
+  return `/api/drivers/operational-queue/${id}/documents`
+}
+
+/**
+ * @summary Upload a private document for the candidate's current Twenty step
+ */
+export const uploadTwentyDriverDocument = async (id: string,
+    uploadTwentyDriverDocumentBody: UploadTwentyDriverDocumentBody, options?: Parameters<typeof customFetch>[1]): Promise<TwentyDriverDocument> => {
+    const formData = new FormData();
+formData.append(`file`, uploadTwentyDriverDocumentBody.file);
+formData.append(`stepKey`, uploadTwentyDriverDocumentBody.stepKey);
+formData.append(`requirementKey`, uploadTwentyDriverDocumentBody.requirementKey);
+if(uploadTwentyDriverDocumentBody.notes !== undefined) {
+ formData.append(`notes`, uploadTwentyDriverDocumentBody.notes);
+ }
+
+  return customFetch<TwentyDriverDocument>(getUploadTwentyDriverDocumentUrl(id),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+
+export const getUploadTwentyDriverDocumentMutationOptions = <TError = ErrorType<ErrorResponse | ForbiddenErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadTwentyDriverDocument>>, TError,{id: string;data: BodyType<UploadTwentyDriverDocumentBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadTwentyDriverDocument>>, TError,{id: string;data: BodyType<UploadTwentyDriverDocumentBody>}, TContext> => {
+
+const mutationKey = ['uploadTwentyDriverDocument'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadTwentyDriverDocument>>, {id: string;data: BodyType<UploadTwentyDriverDocumentBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  uploadTwentyDriverDocument(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadTwentyDriverDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof uploadTwentyDriverDocument>>>
+    export type UploadTwentyDriverDocumentMutationBody = BodyType<UploadTwentyDriverDocumentBody>
+    export type UploadTwentyDriverDocumentMutationError = ErrorType<ErrorResponse | ForbiddenErrorResponse>
+
+    /**
+ * @summary Upload a private document for the candidate's current Twenty step
+ */
+export const useUploadTwentyDriverDocument = <TError = ErrorType<ErrorResponse | ForbiddenErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadTwentyDriverDocument>>, TError,{id: string;data: BodyType<UploadTwentyDriverDocumentBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadTwentyDriverDocument>>,
+        TError,
+        {id: string;data: BodyType<UploadTwentyDriverDocumentBody>},
+        TContext
+      > => {
+      return useMutation(getUploadTwentyDriverDocumentMutationOptions(options));
+    }
+
+export const getDownloadTwentyDriverDocumentUrl = (id: string,
+    docId: number,) => {
+
+
+
+
+  return `/api/drivers/operational-queue/${id}/documents/${docId}/download`
+}
+
+/**
+ * @summary Download a private candidate document after workspace authorization
+ */
+export const downloadTwentyDriverDocument = async (id: string,
+    docId: number, options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
+
+  return customFetch<Blob>(getDownloadTwentyDriverDocumentUrl(id,docId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadTwentyDriverDocumentQueryKey = (id: string,
+    docId: number,) => {
+    return [
+    `/api/drivers/operational-queue/${id}/documents/${docId}/download`
+    ] as const;
+    }
+
+
+export const getDownloadTwentyDriverDocumentQueryOptions = <TData = Awaited<ReturnType<typeof downloadTwentyDriverDocument>>, TError = ErrorType<ForbiddenErrorResponse | ErrorResponse>>(id: string,
+    docId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadTwentyDriverDocument>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadTwentyDriverDocumentQueryKey(id,docId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadTwentyDriverDocument>>> = ({ signal }) => downloadTwentyDriverDocument(id,docId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined && docId !== null && docId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadTwentyDriverDocument>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DownloadTwentyDriverDocumentQueryResult = NonNullable<Awaited<ReturnType<typeof downloadTwentyDriverDocument>>>
+export type DownloadTwentyDriverDocumentQueryError = ErrorType<ForbiddenErrorResponse | ErrorResponse>
+
+
+/**
+ * @summary Download a private candidate document after workspace authorization
+ */
+
+export function useDownloadTwentyDriverDocument<TData = Awaited<ReturnType<typeof downloadTwentyDriverDocument>>, TError = ErrorType<ForbiddenErrorResponse | ErrorResponse>>(
+ id: string,
+    docId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadTwentyDriverDocument>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDownloadTwentyDriverDocumentQueryOptions(id,docId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getReviewTwentyDriverDocumentUrl = (id: string,
+    docId: number,) => {
+
+
+
+
+  return `/api/drivers/operational-queue/${id}/documents/${docId}/review`
+}
+
+/**
+ * @summary Verify or reject an uploaded candidate document
+ */
+export const reviewTwentyDriverDocument = async (id: string,
+    docId: number,
+    twentyDocumentReviewInput: TwentyDocumentReviewInput, options?: Parameters<typeof customFetch>[1]): Promise<ReviewTwentyDriverDocument200> => {
+
+  return customFetch<ReviewTwentyDriverDocument200>(getReviewTwentyDriverDocumentUrl(id,docId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(twentyDocumentReviewInput)
+  }
+);}
+
+
+
+
+
+export const getReviewTwentyDriverDocumentMutationOptions = <TError = ErrorType<ErrorResponse | ForbiddenErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewTwentyDriverDocument>>, TError,{id: string;docId: number;data: BodyType<TwentyDocumentReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewTwentyDriverDocument>>, TError,{id: string;docId: number;data: BodyType<TwentyDocumentReviewInput>}, TContext> => {
+
+const mutationKey = ['reviewTwentyDriverDocument'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewTwentyDriverDocument>>, {id: string;docId: number;data: BodyType<TwentyDocumentReviewInput>}> = (props) => {
+          const {id,docId,data} = props ?? {};
+
+          return  reviewTwentyDriverDocument(id,docId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewTwentyDriverDocumentMutationResult = NonNullable<Awaited<ReturnType<typeof reviewTwentyDriverDocument>>>
+    export type ReviewTwentyDriverDocumentMutationBody = BodyType<TwentyDocumentReviewInput>
+    export type ReviewTwentyDriverDocumentMutationError = ErrorType<ErrorResponse | ForbiddenErrorResponse>
+
+    /**
+ * @summary Verify or reject an uploaded candidate document
+ */
+export const useReviewTwentyDriverDocument = <TError = ErrorType<ErrorResponse | ForbiddenErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewTwentyDriverDocument>>, TError,{id: string;docId: number;data: BodyType<TwentyDocumentReviewInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reviewTwentyDriverDocument>>,
+        TError,
+        {id: string;docId: number;data: BodyType<TwentyDocumentReviewInput>},
+        TContext
+      > => {
+      return useMutation(getReviewTwentyDriverDocumentMutationOptions(options));
+    }
+
+export const getCompleteTwentyDriverStepUrl = (id: string,) => {
+
+
+
+
+  return `/api/drivers/operational-queue/${id}/complete-step`
+}
+
+/**
+ * @summary Manually complete a no-document Twenty step
+ */
+export const completeTwentyDriverStep = async (id: string,
+    completeTwentyDriverStepBody: CompleteTwentyDriverStepBody, options?: Parameters<typeof customFetch>[1]): Promise<TwentyAdvancementResult> => {
+
+  return customFetch<TwentyAdvancementResult>(getCompleteTwentyDriverStepUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(completeTwentyDriverStepBody)
+  }
+);}
+
+
+
+
+
+export const getCompleteTwentyDriverStepMutationOptions = <TError = ErrorType<ForbiddenErrorResponse | ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeTwentyDriverStep>>, TError,{id: string;data: BodyType<CompleteTwentyDriverStepBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeTwentyDriverStep>>, TError,{id: string;data: BodyType<CompleteTwentyDriverStepBody>}, TContext> => {
+
+const mutationKey = ['completeTwentyDriverStep'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeTwentyDriverStep>>, {id: string;data: BodyType<CompleteTwentyDriverStepBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  completeTwentyDriverStep(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteTwentyDriverStepMutationResult = NonNullable<Awaited<ReturnType<typeof completeTwentyDriverStep>>>
+    export type CompleteTwentyDriverStepMutationBody = BodyType<CompleteTwentyDriverStepBody>
+    export type CompleteTwentyDriverStepMutationError = ErrorType<ForbiddenErrorResponse | ErrorResponse>
+
+    /**
+ * @summary Manually complete a no-document Twenty step
+ */
+export const useCompleteTwentyDriverStep = <TError = ErrorType<ForbiddenErrorResponse | ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeTwentyDriverStep>>, TError,{id: string;data: BodyType<CompleteTwentyDriverStepBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof completeTwentyDriverStep>>,
+        TError,
+        {id: string;data: BodyType<CompleteTwentyDriverStepBody>},
+        TContext
+      > => {
+      return useMutation(getCompleteTwentyDriverStepMutationOptions(options));
+    }
+
+export const getListTwentyDocumentRequirementsUrl = () => {
+
+
+
+
+  return `/api/document-requirements`
+}
+
+/**
+ * @summary List workspace document requirement configuration
+ */
+export const listTwentyDocumentRequirements = async ( options?: Parameters<typeof customFetch>[1]): Promise<TwentyDocumentRequirement[]> => {
+
+  return customFetch<TwentyDocumentRequirement[]>(getListTwentyDocumentRequirementsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTwentyDocumentRequirementsQueryKey = () => {
+    return [
+    `/api/document-requirements`
+    ] as const;
+    }
+
+
+export const getListTwentyDocumentRequirementsQueryOptions = <TData = Awaited<ReturnType<typeof listTwentyDocumentRequirements>>, TError = ErrorType<ForbiddenErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTwentyDocumentRequirements>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTwentyDocumentRequirementsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTwentyDocumentRequirements>>> = ({ signal }) => listTwentyDocumentRequirements({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTwentyDocumentRequirements>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListTwentyDocumentRequirementsQueryResult = NonNullable<Awaited<ReturnType<typeof listTwentyDocumentRequirements>>>
+export type ListTwentyDocumentRequirementsQueryError = ErrorType<ForbiddenErrorResponse>
+
+
+/**
+ * @summary List workspace document requirement configuration
+ */
+
+export function useListTwentyDocumentRequirements<TData = Awaited<ReturnType<typeof listTwentyDocumentRequirements>>, TError = ErrorType<ForbiddenErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTwentyDocumentRequirements>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListTwentyDocumentRequirementsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateTwentyDocumentRequirementUrl = (requirementId: number,) => {
+
+
+
+
+  return `/api/document-requirements/${requirementId}`
+}
+
+/**
+ * @summary Update one workspace document requirement
+ */
+export const updateTwentyDocumentRequirement = async (requirementId: number,
+    twentyDocumentRequirementUpdate: TwentyDocumentRequirementUpdate, options?: Parameters<typeof customFetch>[1]): Promise<TwentyDocumentRequirement> => {
+
+  return customFetch<TwentyDocumentRequirement>(getUpdateTwentyDocumentRequirementUrl(requirementId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(twentyDocumentRequirementUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateTwentyDocumentRequirementMutationOptions = <TError = ErrorType<ForbiddenErrorResponse | ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTwentyDocumentRequirement>>, TError,{requirementId: number;data: BodyType<TwentyDocumentRequirementUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTwentyDocumentRequirement>>, TError,{requirementId: number;data: BodyType<TwentyDocumentRequirementUpdate>}, TContext> => {
+
+const mutationKey = ['updateTwentyDocumentRequirement'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTwentyDocumentRequirement>>, {requirementId: number;data: BodyType<TwentyDocumentRequirementUpdate>}> = (props) => {
+          const {requirementId,data} = props ?? {};
+
+          return  updateTwentyDocumentRequirement(requirementId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTwentyDocumentRequirementMutationResult = NonNullable<Awaited<ReturnType<typeof updateTwentyDocumentRequirement>>>
+    export type UpdateTwentyDocumentRequirementMutationBody = BodyType<TwentyDocumentRequirementUpdate>
+    export type UpdateTwentyDocumentRequirementMutationError = ErrorType<ForbiddenErrorResponse | ErrorResponse>
+
+    /**
+ * @summary Update one workspace document requirement
+ */
+export const useUpdateTwentyDocumentRequirement = <TError = ErrorType<ForbiddenErrorResponse | ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTwentyDocumentRequirement>>, TError,{requirementId: number;data: BodyType<TwentyDocumentRequirementUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateTwentyDocumentRequirement>>,
+        TError,
+        {requirementId: number;data: BodyType<TwentyDocumentRequirementUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateTwentyDocumentRequirementMutationOptions(options));
+    }
 
 export const getGetDriverUrl = (id: number,) => {
 

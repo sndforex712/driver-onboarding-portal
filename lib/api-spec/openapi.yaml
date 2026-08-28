@@ -163,7 +163,7 @@ paths:
           schema:
             type: integer
             minimum: 1
-            maximum: 11
+            maximum: 12
         - name: source
           in: query
           schema: { type: string }
@@ -174,6 +174,268 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DriverOperationalQueue"
+
+  /drivers/operational-queue/{id}:
+    patch:
+      operationId: updateTwentyDriverCandidate
+      tags: [drivers]
+      summary: Persist a queue owner or status in Twenty Cloud
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TwentyDriverCandidateUpdate"
+      responses:
+        "200":
+          description: Saved Twenty Driver Candidate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TwentyDriverCandidate"
+        "400":
+          description: Invalid candidate ID or edit value
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "502":
+          description: Twenty Cloud is unavailable
+
+  /drivers/operational-queue/{id}/document-workflow:
+    get:
+      operationId: getTwentyDocumentWorkflow
+      tags: [documents]
+      summary: Get the canonical 12-step document workflow for one Twenty candidate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Candidate workflow, requirements, and documents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TwentyDocumentWorkflow"
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "404":
+          description: Candidate not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /drivers/operational-queue/{id}/documents:
+    post:
+      operationId: uploadTwentyDriverDocument
+      tags: [documents]
+      summary: Upload a private document for the candidate's current Twenty step
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, stepKey, requirementKey]
+              properties:
+                file:
+                  type: string
+                  description: Multipart file part; validated as PDF/JPEG/PNG/WebP by the API server.
+                stepKey:
+                  type: string
+                requirementKey:
+                  type: string
+                notes:
+                  type: string
+                  maxLength: 1000
+      responses:
+        "201":
+          description: Stored document awaiting review
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TwentyDriverDocument" }
+        "400":
+          description: Invalid file or requirement
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "409":
+          description: Candidate step changed before upload
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /drivers/operational-queue/{id}/documents/{docId}/download:
+    get:
+      operationId: downloadTwentyDriverDocument
+      tags: [documents]
+      summary: Download a private candidate document after workspace authorization
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: docId
+          in: path
+          required: true
+          schema: { type: number, minimum: 1 }
+      responses:
+        "200":
+          description: Private document bytes
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+            image/jpeg:
+              schema: { type: string, format: binary }
+            image/png:
+              schema: { type: string, format: binary }
+            image/webp:
+              schema: { type: string, format: binary }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "404":
+          description: Document not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /drivers/operational-queue/{id}/documents/{docId}/review:
+    patch:
+      operationId: reviewTwentyDriverDocument
+      tags: [documents]
+      summary: Verify or reject an uploaded candidate document
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: docId
+          in: path
+          required: true
+          schema: { type: number, minimum: 1 }
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema: { type: string, minLength: 8, maxLength: 200 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TwentyDocumentReviewInput" }
+      responses:
+        "200":
+          description: Reviewed document and guarded advancement result
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [document, advancement]
+                properties:
+                  document: { $ref: "#/components/schemas/TwentyDriverDocument" }
+                  advancement: { $ref: "#/components/schemas/TwentyAdvancementResult" }
+        "400":
+          description: Invalid review transition
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "409":
+          description: Review or step state conflict
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /drivers/operational-queue/{id}/complete-step:
+    post:
+      operationId: completeTwentyDriverStep
+      tags: [documents]
+      summary: Manually complete a no-document Twenty step
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema: { type: string, minLength: 8, maxLength: 200 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedStepKey]
+              properties:
+                expectedStepKey: { type: string }
+      responses:
+        "200":
+          description: Guarded completion result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TwentyAdvancementResult" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "409":
+          description: Candidate step changed or cannot be manually completed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  /document-requirements:
+    get:
+      operationId: listTwentyDocumentRequirements
+      tags: [documents]
+      summary: List workspace document requirement configuration
+      responses:
+        "200":
+          description: Canonical requirement configuration
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TwentyDocumentRequirement" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+
+  /document-requirements/{requirementId}:
+    patch:
+      operationId: updateTwentyDocumentRequirement
+      tags: [documents]
+      summary: Update one workspace document requirement
+      parameters:
+        - name: requirementId
+          in: path
+          required: true
+          schema: { type: number, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TwentyDocumentRequirementUpdate" }
+      responses:
+        "200":
+          description: Updated requirement
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TwentyDocumentRequirement" }
+        "403": { $ref: "#/components/responses/ForbiddenError" }
+        "404":
+          description: Requirement not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
 
   /drivers/{id}:
     get:
@@ -1612,7 +1874,7 @@ components:
         - completionPercent
         - updatedAt
       properties:
-        id: { type: number }
+        id: { type: string }
         fullName: { type: string }
         driverType: { type: string, enum: [owner_operator, company_driver] }
         status: { type: string }
@@ -1690,6 +1952,41 @@ components:
             sources:
               type: array
               items: { type: string }
+
+    TwentyDriverCandidateUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        recruiter:
+          type: string
+          enum: [HARDY, RECRUITER_A, RECRUITER_B]
+        status:
+          type: string
+          enum: [ACTIVE, HIRED_DISPATCH_READY, NOT_QUALIFIED, WITHDRAWN, NO_RESPONSE, REJECTED]
+
+    TwentyDriverCandidate:
+      type: object
+      required: [id, fullName, phone, currentStep, currentStepNumber, currentStepLabel, completedStepNumbers, completionPercent, status, recruiter, recruiterLabel, source, nextFollowUp]
+      properties:
+        id: { type: string }
+        fullName: { type: string }
+        phone: { type: ["string", "null"] }
+        currentStep: { type: string }
+        currentStepNumber: { type: number, minimum: 1, maximum: 12 }
+        currentStepLabel: { type: string }
+        completedStepNumbers:
+          type: array
+          items: { type: number }
+        completionPercent: { type: number }
+        status:
+          type: string
+          enum: [ACTIVE, HIRED_DISPATCH_READY, NOT_QUALIFIED, WITHDRAWN, NO_RESPONSE, REJECTED]
+        recruiter:
+          type: string
+          enum: [HARDY, RECRUITER_A, RECRUITER_B]
+        recruiterLabel: { type: string }
+        source: { type: string }
+        nextFollowUp: { type: ["string", "null"], format: date-time }
 
     DriverInput:
       type: object
@@ -1951,6 +2248,100 @@ components:
           type: string
         notes:
           type: string
+
+    TwentyDocumentRequirement:
+      type: object
+      required: [id, stepKey, requirementKey, label, isMandatory, allowsManualCompletion, sortOrder]
+      properties:
+        id: { type: number }
+        stepKey: { type: string }
+        requirementKey: { type: string }
+        label: { type: string }
+        isMandatory: { type: boolean }
+        allowsManualCompletion: { type: boolean }
+        sortOrder: { type: number }
+
+    TwentyDocumentRequirementUpdate:
+      type: object
+      properties:
+        label: { type: string, minLength: 1, maxLength: 200 }
+        isMandatory: { type: boolean }
+        allowsManualCompletion: { type: boolean }
+        sortOrder: { type: number, minimum: 0, maximum: 100 }
+
+    TwentyDriverDocument:
+      type: object
+      required: [id, candidateId, stepKey, requirementKey, docName, status, mimeType, sizeBytes, createdAt]
+      properties:
+        id: { type: number }
+        candidateId: { type: string }
+        stepKey: { type: string }
+        requirementKey: { type: string }
+        docName: { type: string }
+        status:
+          type: string
+          enum: [under_review, verified, rejected]
+        mimeType: { type: string }
+        sizeBytes: { type: number }
+        notes: { type: [string, "null"] }
+        rejectionReason: { type: [string, "null"] }
+        uploadedAt: { type: [string, "null"] }
+        reviewedAt: { type: [string, "null"], format: date-time }
+        verifiedAt: { type: [string, "null"] }
+        downloadUrl: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    TwentyDocumentWorkflow:
+      type: object
+      required: [candidateId, candidateName, canManageDocuments, currentStepKey, currentStepNumber, currentStepLabel, steps]
+      properties:
+        candidateId: { type: string }
+        candidateName: { type: string }
+        canManageDocuments: { type: boolean }
+        currentStepKey: { type: string }
+        currentStepNumber: { type: number, minimum: 1, maximum: 12 }
+        currentStepLabel: { type: string }
+        steps:
+          type: array
+          items:
+            type: object
+            required: [number, key, label, state, allowsManualCompletion, requirements, documents]
+            properties:
+              number: { type: number }
+              key: { type: string }
+              label: { type: string }
+              state:
+                type: string
+                enum: [complete, current, upcoming]
+              allowsManualCompletion: { type: boolean }
+              requirements:
+                type: array
+                items: { $ref: "#/components/schemas/TwentyDocumentRequirement" }
+              documents:
+                type: array
+                items: { $ref: "#/components/schemas/TwentyDriverDocument" }
+
+    TwentyDocumentReviewInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [verified, rejected]
+        rejectionReason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+
+    TwentyAdvancementResult:
+      type: object
+      required: [advanced, finalCompleted, currentStepKey, message]
+      properties:
+        advanced: { type: boolean }
+        finalCompleted: { type: boolean }
+        currentStepKey: { type: string }
+        nextStepKey: { type: [string, "null"] }
+        message: { type: string }
 
     ActivityEntry:
       type: object

@@ -703,7 +703,7 @@ export const DriverOperationalRowQuality = {
 } as const;
 
 export interface DriverOperationalRow {
-  id: number;
+  id: string;
   fullName: string;
   driverType: DriverOperationalRowDriverType;
   status: string;
@@ -774,6 +774,75 @@ export interface DriverOperationalQueue {
   /** Number of canonical operational milestones in this workspace workflow. */
   stepCount: number;
   filterOptions: DriverOperationalQueueFilterOptions;
+}
+
+export type TwentyDriverCandidateUpdateRecruiter = typeof TwentyDriverCandidateUpdateRecruiter[keyof typeof TwentyDriverCandidateUpdateRecruiter];
+
+
+export const TwentyDriverCandidateUpdateRecruiter = {
+  HARDY: 'HARDY',
+  RECRUITER_A: 'RECRUITER_A',
+  RECRUITER_B: 'RECRUITER_B',
+} as const;
+
+export type TwentyDriverCandidateUpdateStatus = typeof TwentyDriverCandidateUpdateStatus[keyof typeof TwentyDriverCandidateUpdateStatus];
+
+
+export const TwentyDriverCandidateUpdateStatus = {
+  ACTIVE: 'ACTIVE',
+  HIRED_DISPATCH_READY: 'HIRED_DISPATCH_READY',
+  NOT_QUALIFIED: 'NOT_QUALIFIED',
+  WITHDRAWN: 'WITHDRAWN',
+  NO_RESPONSE: 'NO_RESPONSE',
+  REJECTED: 'REJECTED',
+} as const;
+
+export interface TwentyDriverCandidateUpdate {
+  recruiter?: TwentyDriverCandidateUpdateRecruiter;
+  status?: TwentyDriverCandidateUpdateStatus;
+}
+
+export type TwentyDriverCandidateStatus = typeof TwentyDriverCandidateStatus[keyof typeof TwentyDriverCandidateStatus];
+
+
+export const TwentyDriverCandidateStatus = {
+  ACTIVE: 'ACTIVE',
+  HIRED_DISPATCH_READY: 'HIRED_DISPATCH_READY',
+  NOT_QUALIFIED: 'NOT_QUALIFIED',
+  WITHDRAWN: 'WITHDRAWN',
+  NO_RESPONSE: 'NO_RESPONSE',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type TwentyDriverCandidateRecruiter = typeof TwentyDriverCandidateRecruiter[keyof typeof TwentyDriverCandidateRecruiter];
+
+
+export const TwentyDriverCandidateRecruiter = {
+  HARDY: 'HARDY',
+  RECRUITER_A: 'RECRUITER_A',
+  RECRUITER_B: 'RECRUITER_B',
+} as const;
+
+export interface TwentyDriverCandidate {
+  id: string;
+  fullName: string;
+  /** @nullable */
+  phone: string | null;
+  currentStep: string;
+  /**
+     * @minimum 1
+     * @maximum 12
+     */
+  currentStepNumber: number;
+  currentStepLabel: string;
+  completedStepNumbers: number[];
+  completionPercent: number;
+  status: TwentyDriverCandidateStatus;
+  recruiter: TwentyDriverCandidateRecruiter;
+  recruiterLabel: string;
+  source: string;
+  /** @nullable */
+  nextFollowUp: string | null;
 }
 
 export type DriverInputDriverType = typeof DriverInputDriverType[keyof typeof DriverInputDriverType];
@@ -1091,6 +1160,122 @@ export interface DriverDocumentUpdate {
   status?: DriverDocumentUpdateStatus;
   expiryDate?: string;
   notes?: string;
+}
+
+export interface TwentyDocumentRequirement {
+  id: number;
+  stepKey: string;
+  requirementKey: string;
+  label: string;
+  isMandatory: boolean;
+  allowsManualCompletion: boolean;
+  sortOrder: number;
+}
+
+export interface TwentyDocumentRequirementUpdate {
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  label?: string;
+  isMandatory?: boolean;
+  allowsManualCompletion?: boolean;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  sortOrder?: number;
+}
+
+export type TwentyDriverDocumentStatus = typeof TwentyDriverDocumentStatus[keyof typeof TwentyDriverDocumentStatus];
+
+
+export const TwentyDriverDocumentStatus = {
+  under_review: 'under_review',
+  verified: 'verified',
+  rejected: 'rejected',
+} as const;
+
+export interface TwentyDriverDocument {
+  id: number;
+  candidateId: string;
+  stepKey: string;
+  requirementKey: string;
+  docName: string;
+  status: TwentyDriverDocumentStatus;
+  mimeType: string;
+  sizeBytes: number;
+  /** @nullable */
+  notes?: string | null;
+  /** @nullable */
+  rejectionReason?: string | null;
+  /** @nullable */
+  uploadedAt?: string | null;
+  /** @nullable */
+  reviewedAt?: string | null;
+  /** @nullable */
+  verifiedAt?: string | null;
+  downloadUrl?: string;
+  createdAt: string;
+}
+
+export type TwentyDocumentWorkflowStepsItemState = typeof TwentyDocumentWorkflowStepsItemState[keyof typeof TwentyDocumentWorkflowStepsItemState];
+
+
+export const TwentyDocumentWorkflowStepsItemState = {
+  complete: 'complete',
+  current: 'current',
+  upcoming: 'upcoming',
+} as const;
+
+export type TwentyDocumentWorkflowStepsItem = {
+  number: number;
+  key: string;
+  label: string;
+  state: TwentyDocumentWorkflowStepsItemState;
+  allowsManualCompletion: boolean;
+  requirements: TwentyDocumentRequirement[];
+  documents: TwentyDriverDocument[];
+};
+
+export interface TwentyDocumentWorkflow {
+  candidateId: string;
+  candidateName: string;
+  canManageDocuments: boolean;
+  currentStepKey: string;
+  /**
+     * @minimum 1
+     * @maximum 12
+     */
+  currentStepNumber: number;
+  currentStepLabel: string;
+  steps: TwentyDocumentWorkflowStepsItem[];
+}
+
+export type TwentyDocumentReviewInputStatus = typeof TwentyDocumentReviewInputStatus[keyof typeof TwentyDocumentReviewInputStatus];
+
+
+export const TwentyDocumentReviewInputStatus = {
+  verified: 'verified',
+  rejected: 'rejected',
+} as const;
+
+export interface TwentyDocumentReviewInput {
+  status: TwentyDocumentReviewInputStatus;
+  /**
+     * @minLength 1
+     * @maxLength 1000
+     */
+  rejectionReason?: string;
+}
+
+export interface TwentyAdvancementResult {
+  advanced: boolean;
+  finalCompleted: boolean;
+  currentStepKey: string;
+  /** @nullable */
+  nextStepKey?: string | null;
+  message: string;
 }
 
 export interface ActivityEntry {
@@ -1461,7 +1646,7 @@ search?: string;
 operationalOwner?: string;
 /**
  * @minimum 1
- * @maximum 11
+ * @maximum 12
  */
 step?: number;
 source?: string;
@@ -1478,6 +1663,24 @@ export const ListDriverOperationalQueueView = {
   no_next_action: 'no_next_action',
   needs_review: 'needs_review',
 } as const;
+
+export type UploadTwentyDriverDocumentBody = {
+  /** Multipart file part; validated as PDF/JPEG/PNG/WebP by the API server. */
+  file: string;
+  stepKey: string;
+  requirementKey: string;
+  /** @maxLength 1000 */
+  notes?: string;
+};
+
+export type ReviewTwentyDriverDocument200 = {
+  document: TwentyDriverDocument;
+  advancement: TwentyAdvancementResult;
+};
+
+export type CompleteTwentyDriverStepBody = {
+  expectedStepKey: string;
+};
 
 export type GetWorkQueueParams = {
 /**
