@@ -2,6 +2,14 @@ modules = ["nodejs-24", "python-base-3.13", "postgresql-16"]
 
 [deployment]
 router = "application"
+deploymentTarget = "vm"
+run = ["pnpm", "run", "start:production"]
+build = ["pnpm", "run", "build:production"]
+
+[[deployment.responseHeaders]]
+path = "/*"
+name = "Cache-Control"
+value = "no-store, no-cache, must-revalidate, proxy-revalidate"
 
 [nix]
 channel = "stable-25_05"
@@ -15,3 +23,33 @@ timeoutMs = 180000
 [userenv.development]
 FRANKLINS_DEMO_LOGIN_ENABLED = "1"
 FRANKLINS_DEMO_EMPTY_WORKSPACE = "1"
+
+[userenv.production]
+FRANKLINS_DEMO_LOGIN_ENABLED = "1"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/driver-portal: web"
+
+[[workflows.workflow]]
+name = "artifacts/driver-portal: web"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --dir artifacts/driver-portal run dev"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-2f4f41c7-4b52-452e-a371-84b2ee784274"
