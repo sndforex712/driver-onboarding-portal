@@ -2,6 +2,7 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
+import path from "node:path";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { internalError } from "./lib/api-errors";
@@ -33,6 +34,24 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use("/api", router);
+
+if (process.env.NODE_ENV === "production") {
+  const frontendDir = path.resolve(import.meta.dirname, "../../franklins-onboarding/dist/public");
+  const setHtmlNoCacheHeaders = (response: Response, filePath: string) => {
+    if (path.basename(filePath) !== "index.html") return;
+    response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    response.setHeader("Pragma", "no-cache");
+    response.setHeader("Expires", "0");
+  };
+
+  app.use(express.static(frontendDir, { setHeaders: setHtmlNoCacheHeaders }));
+  app.get(/^(?!\/api(?:\/|$)).*$/, (_req, res, next) => {
+    setHtmlNoCacheHeaders(res, path.join(frontendDir, "index.html"));
+    res.sendFile(path.join(frontendDir, "index.html"), (error) => {
+      if (error) next(error);
+    });
+  });
+}
 
 // ─── Global error handler ─────────────────────────────────────────────────────
 // Catches any unhandled error thrown inside a route handler.
