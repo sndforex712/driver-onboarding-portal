@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CalendarClock, ChevronRight, FilterX, Search } from "lucide-react";
+import { CalendarClock, FilterX, Search } from "lucide-react";
 import { Button, Card, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui";
 import { formatDateTime } from "@/lib/utils";
 import { DriverPhoneActions } from "./driver-phone-actions";
 import { DRIVER_OWNER_SECTIONS, groupDriverRows } from "./driver-owner-sections";
-import { DriverDocumentWorkflowPanel } from "./driver-document-workflow";
 
 type QueueView = "all" | "due_today" | "overdue" | "waiting_blocked" | "no_next_action" | "needs_review";
 
@@ -74,7 +73,6 @@ export default function DriversList({ onSignedOut }: { onSignedOut: () => void }
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [selectedDriver, setSelectedDriver] = useState<DriverRow | null>(null);
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
@@ -228,8 +226,8 @@ export default function DriversList({ onSignedOut }: { onSignedOut: () => void }
                         <span className="text-[11px] font-medium text-muted-foreground">{section.stepRange}</span>
                         <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">{sectionRows.length}</span>
                       </div>
-                      <Table>
-                        <TableHeader><TableRow><TableHead>Driver</TableHead><TableHead>Current Step</TableHead><TableHead>Operational Owner</TableHead><TableHead>Recruiter / Source</TableHead><TableHead>Safe Status</TableHead><TableHead>Due</TableHead><TableHead className="text-right">Documents</TableHead></TableRow></TableHeader>
+                       <Table>
+                         <TableHeader><TableRow><TableHead>Driver</TableHead><TableHead>Current Step</TableHead><TableHead>Operational Owner</TableHead><TableHead>Recruiter / Source</TableHead><TableHead>Safe Status</TableHead><TableHead>Due</TableHead></TableRow></TableHeader>
                         <TableBody>
                           {sectionRows.map((driver) => {
                             const saving = savingId === driver.id;
@@ -241,12 +239,11 @@ export default function DriversList({ onSignedOut }: { onSignedOut: () => void }
                                 <TableCell><select aria-label={`Owner for ${driver.fullName}`} disabled={saving} className="h-8 rounded-md border border-input bg-card px-2 text-xs disabled:opacity-50" value={ownerValue} onChange={(event) => void updateCandidate(driver.id, { recruiter: event.target.value })}>{OWNERS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></TableCell>
                                 <TableCell><div className="text-xs">{driver.recruiterName}</div><div className="text-[10px] text-muted-foreground capitalize">{driver.sourceChannel.replace(/_/g, " ") || "—"}</div></TableCell>
                                 <TableCell><div className="min-w-[9rem]"><select aria-label={`Status for ${driver.fullName}`} disabled={saving} className="h-8 w-full rounded-md border border-input bg-card px-2 text-xs disabled:opacity-50" value={driver.status} onChange={(event) => void updateCandidate(driver.id, { status: event.target.value })}>{STATUSES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><div className="mt-1 text-[10px] text-muted-foreground">{saving ? "Saving to Twenty Cloud…" : statusLabel(driver.status)}</div></div></TableCell>
-                                <TableCell>{driver.nextActionDue ? <div className="flex items-center gap-1 text-xs"><CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />{formatDateTime(driver.nextActionDue)}</div> : <span className="text-xs text-muted-foreground">—</span>}</TableCell>
-                                 <TableCell className="text-right"><Button type="button" size="sm" variant="outline" onClick={() => setSelectedDriver(driver)}>Open <ChevronRight className="ml-1 h-3.5 w-3.5" /></Button></TableCell>
+                                 <TableCell>{driver.nextActionDue ? <div className="flex items-center gap-1 text-xs"><CalendarClock className="h-3.5 w-3.5 text-muted-foreground" />{formatDateTime(driver.nextActionDue)}</div> : <span className="text-xs text-muted-foreground">—</span>}</TableCell>
                               </TableRow>
                             );
                           })}
-                          {sectionRows.length === 0 && <TableRow><TableCell colSpan={7} className="h-20 text-center text-xs text-muted-foreground">No drivers match these filters in {section.label}.</TableCell></TableRow>}
+                           {sectionRows.length === 0 && <TableRow><TableCell colSpan={6} className="h-20 text-center text-xs text-muted-foreground">No drivers match these filters in {section.label}.</TableCell></TableRow>}
                         </TableBody>
                       </Table>
                     </section>
@@ -257,15 +254,7 @@ export default function DriversList({ onSignedOut }: { onSignedOut: () => void }
           </Card>
         </div>
         <footer className="mt-6 border-t border-border pt-4 text-center text-[11px] text-muted-foreground">DEV / DEMO — Twenty Cloud-backed driver queue.</footer>
-      </div>
-       {selectedDriver && (
-         <DriverDocumentWorkflowPanel
-           candidateId={selectedDriver.id}
-           candidateName={selectedDriver.fullName}
-           onClose={() => setSelectedDriver(null)}
-           onWorkflowChanged={() => { void loadQueue(); }}
-         />
-       )}
+       </div>
     </main>
   );
 }
